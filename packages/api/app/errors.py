@@ -14,3 +14,11 @@ class NotFoundError(Exception):
         self.entity_id = entity_id
         self.message = f"{entity_name} with id {entity_id} not found"
         super().__init__(self.message)
+
+
+class ValidationError(Exception):
+    """Raised when a business rule is violated."""
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(self.message)

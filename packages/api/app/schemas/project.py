@@ -25,8 +25,7 @@ class ProjectUpdate(BaseModel):
     status: str | None = None
 
 
-class GameProfileCreate(BaseModel):
-    project_id: UUID
+class GameProfileCreateBody(BaseModel):
     genre: str | None = None
     target_audience: str | None = None
     core_mechanics: list[str] | None = None
@@ -34,6 +33,10 @@ class GameProfileCreate(BaseModel):
     brand_guidelines: dict | None = None
     competitors: list[str] | None = None
     key_selling_points: list[str] | None = None
+
+
+class GameProfileCreate(GameProfileCreateBody):
+    project_id: UUID
 
 
 class GameProfileRead(BaseModel):
