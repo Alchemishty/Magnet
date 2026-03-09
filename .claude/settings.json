@@ -1,10 +1,14 @@
 {
   "hooks": {
-    "PreToolCall": [
+    "PreToolUse": [
       {
         "matcher": "Bash",
-        "pattern": "git commit",
-        "command": "bash enforcement/run-all.sh && cd packages/api && ruff check . && pytest -x && cd ../../packages/web && npx eslint . && npx vitest run"
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/pre-commit-checks.sh"
+          }
+        ]
       }
     ]
   }
