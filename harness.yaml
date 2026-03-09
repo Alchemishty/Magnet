@@ -66,6 +66,8 @@ docs:
   plans_active: "docs/plans/active/"
   plans_completed: "docs/plans/completed/"
   decisions: "docs/decisions/"
+  memory: "memory/"
+  scratch: "scratch/"
   max_doc_lines: 200
 
 enforcement:

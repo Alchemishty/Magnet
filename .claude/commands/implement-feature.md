@@ -29,6 +29,8 @@ Before anything else, read `harness.yaml` at the project root. Parse and hold in
 
 Also read `AGENTS.md` to understand project-specific agent rules.
 
+If a `memory/` directory exists at the project root, read its files to load cross-session learned patterns (common failures, fixes, user preferences). This is cheap context that prevents repeating past mistakes.
+
 Determine the repo owner and name from git remote for use in `gh api` calls:
 ```bash
 git remote get-url origin
@@ -63,7 +65,14 @@ Use a descriptive branch name derived from the plan title.
 
 For each step in the plan, in order:
 
-### 2.1 — Read the step requirements
+**Context isolation note:** For plans with 7+ steps, consider using sub-agents for each phase (Planning, Implementation, Cleanup, PR). Each sub-agent gets a fresh context window, preventing degradation from accumulated conversation history. Pass only: plan file path, branch name, `harness.yaml` path, and `memory/` path. Sub-agents exist primarily to isolate context, not to divide roles.
+
+**File-based handoff (avoid the telephone game):** When using sub-agents, have them write results to files rather than relying on conversation relay. Sub-agents should write decisions to the plan's Decision Log, phase results to `scratch/phase-N-results.md`, and issues to `scratch/issues-found.md`. The orchestrator reads these files directly — this preserves full fidelity instead of lossy paraphrasing.
+
+### 2.1 — Re-anchor context (plan re-reading)
+Re-read the current step from the plan file. During long sessions, the original plan drifts toward the middle of the context window where recall is lowest (10-40% lower than edges). Explicitly re-reading places the step requirements at a recent, high-attention position. This costs ~100-200 tokens per step but prevents drift from plan intent.
+
+### 2.2 — Read the step requirements
 Read the step from the plan file. Understand:
 - Which files to create or modify (listed under **Files:**)
 - What tests are needed (listed under **Tests:**)
@@ -72,7 +81,7 @@ Read the step from the plan file. Understand:
 
 If the step references patterns from `docs/conventions.md` or `docs/architecture.md`, read those sections now.
 
-### 2.2 — Write or update tests first (TDD)
+### 2.3 — Write or update tests first (TDD)
 - Write the test(s) for this step before writing the implementation
 - Run the tests to confirm they fail as expected (red phase):
   ```
@@ -80,29 +89,30 @@ If the step references patterns from `docs/conventions.md` or `docs/architecture
   ```
 - If a test framework or helper is missing, create it as part of this step
 
-### 2.3 — Implement the code
+### 2.4 — Implement the code
 - Write the implementation to make the tests pass
 - Follow patterns from `docs/conventions.md`
 - Keep changes focused — one logical change per step
 
-### 2.4 — Run the step's verify command
+### 2.5 — Run the step's verify command
 If the step has a **Verify:** section with a specific command, run it now to confirm the step works before committing.
 
-### 2.5 — Stage changes and commit
+### 2.6 — Stage changes and commit
 Stage the files changed in this step (prefer specific file paths over `git add .`):
 ```bash
 git add <specific-files>
 git commit -m "<descriptive message for this step>"
 ```
 
-### 2.6 — Pre-commit verification gate
+### 2.7 — Pre-commit verification gate
 The pre-commit gate fires automatically on commit. Here is what it does and how to handle it:
 
 1. Read `harness.yaml` -> `verification.checks`
 2. Run each check in order (lint, test, enforcement — whatever is configured)
-3. **If all checks pass:** the commit succeeds. Move on.
-4. **If any check fails:**
-   - Read the error output carefully
+3. **Capture verbose output to scratch/** — write the full output of each check to `scratch/last-verification.log`. Keep only a compact summary in conversation context: pass/fail status, error count, and the first 3 error messages. This prevents test and lint output from bloating the context window.
+4. **If all checks pass:** the commit succeeds. Move on.
+5. **If any check fails:**
+   - Read the error summary (or re-read `scratch/last-verification.log` for details)
    - Identify the root cause
    - Fix the issue
    - Stage the fix and retry the commit
@@ -124,11 +134,14 @@ The pre-commit gate fires automatically on commit. Here is what it does and how 
      ```
    - Wait for the human to help
 
-### 2.7 — Update the plan file
+### 2.8 — Update the plan file
 After a successful commit, update the plan file to mark the step as done. Add a checkmark or `[DONE]` prefix to the step heading:
 ```markdown
 ### Step 1: [DONE] Set up database models
 ```
+
+### 2.9 — Context checkpoint (after step 4+)
+Starting from step 4 onward (or after any retry cycle on the verification gate), write a structured state summary to `scratch/session-state.md` covering: current position, completed steps, files modified, decisions made, and next action. This serves as a cheap re-orientation point — re-reading this file (~200 tokens) is faster and more reliable than scanning the full conversation history. See the context management reference for the checkpoint format.
 
 ---
 
@@ -136,16 +149,27 @@ After a successful commit, update the plan file to mark the step as done. Add a 
 
 After ALL steps in the plan are complete:
 
-### 3.1 — Full codebase enforcement check
+### 3.1 — Decision probes (plan adherence check)
+Before running cleanup, verify that the implementation actually matches the plan. Re-read the plan file and check:
+
+1. **Step coverage** — Is every step marked `[DONE]`? If any are unmarked, they were missed.
+2. **File paths** — Do the files listed in the plan's **Files:** sections actually exist? Run `ls` on each.
+3. **Test paths** — Do the test files listed in the plan's **Tests:** sections exist and pass?
+4. **Conventions** — If the plan's Context and Orientation section referenced specific conventions, spot-check that they were followed (e.g., if it said "follow the repository pattern from conventions.md", verify the new code uses that pattern).
+5. **Open questions resolved** — Check the plan's Open Questions section. Were they all answered? If any were left unresolved, flag them now.
+
+If any probe fails, fix the gap before continuing. If the gap requires architectural judgment, escalate to the human.
+
+### 3.2 — Full codebase enforcement check
 Run all verification checks from `harness.yaml` -> `verification.checks` against the full codebase (not just changed files). Fix any issues found.
 
-### 3.2 — Deslop
+### 3.3 — Deslop
 Invoke `/deslop` to clean up generated code:
 - Remove unnecessary comments
 - Tighten verbose patterns
 - Clean up any slop introduced during implementation
 
-### 3.3 — Garden
+### 3.4 — Garden
 Invoke `/garden` for an entropy scan:
 - Doc freshness (do docs still match the code?)
 - Coverage gaps (any new code without tests?)
@@ -154,8 +178,11 @@ Invoke `/garden` for an entropy scan:
 
 Address any findings before proceeding.
 
-### 3.4 — Generate QA checklist
+### 3.5 — Generate QA checklist
 Invoke `/create-qa` to generate a manual QA checklist based on the changes made. This goes into the PR description or a linked QA doc.
+
+### 3.6 — Observation masking cleanup
+Before moving to Phase 4, ensure all verbose outputs from Phase 2 and 3 are in `scratch/` files and not bloating the conversation context. If you are carrying large diffs, test outputs, or lint results in context, write them to `scratch/` now and keep only summaries going forward.
 
 ---
 
@@ -209,7 +236,10 @@ After pushing fixes:
 
 Loop up to `review.max_review_cycles` (from `harness.yaml`, default 3).
 
-### 4.6 — Resolution
+### 4.6 — Review retrospective
+After all review cycles are complete (whether approved or escalated), run `/retrospective` to capture learnings from the review feedback. Review comments are the highest-signal input for memory — reviewers explicitly state team standards that may not be documented anywhere. Focus on question 1f (review-specific) and 1c (documentation gaps revealed by reviewer comments).
+
+### 4.7 — Resolution
 **If the review agent approves or there are no new actionable comments:**
 ```
 PR is ready for merge: <PR URL>
@@ -249,7 +279,9 @@ After the human merges the PR:
    git push
    ```
 
-2. Report final summary:
+2. Run `/retrospective` to capture learnings from this implementation session. This writes structured findings to `memory/` and optionally proposes improvements to docs or skills. If you prefer a quick finish, at minimum write back to memory any recurring issues you fixed during implementation.
+
+3. Report final summary:
    ```
    Feature complete: <feature name>
 

@@ -34,7 +34,16 @@ Read each of these (using paths from `harness.yaml` -> `docs`, falling back to d
 - **Architecture doc** (`docs/architecture.md`) — project structure, layers, data flow
 - **Conventions doc** (`docs/conventions.md`) — coding patterns, naming, imports, state management
 - **Domain doc** (`docs/domain.md`) — business entities, relationships, domain rules
-- **Decisions directory** (`docs/decisions/`) — read all files; these record past architectural choices that constrain future ones
+- **Decisions directory** (`docs/decisions/`) — read titles and status lines first, then drill into only the decisions relevant to this feature
+
+### From memory
+If a `memory/` directory exists, read its files. These contain cross-session learned patterns, recurring fixes, and user preferences that should inform the plan.
+
+### Context budget during planning
+Planning reads many files. To avoid bloating your context window before you even start writing the plan:
+- For docs files: extract only the **sections relevant to this feature**, not the entire file
+- For source files: if scanning a large file to understand its structure, keep only a summary (class names, method signatures, key patterns) — write full output to `scratch/` if needed
+- For decisions/: read titles first, then drill into relevant ones only
 
 ### From git history
 ```bash

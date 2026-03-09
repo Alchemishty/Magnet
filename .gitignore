@@ -47,3 +47,6 @@ docker-compose.override.yml
 
 # MinIO data
 minio_data/
+
+# Agent scratch (temporary working files)
+scratch/

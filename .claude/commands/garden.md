@@ -62,11 +62,24 @@ Run each check below. Collect results into a report.
 - Check all files in `docs/` against `docs.max_doc_lines` threshold
 - If any file exceeds the threshold: invoke /doc-split for those files
 
+### 6. Scratch Cleanup
+
+- Check if `scratch/` directory exists and has files
+- If running as part of post-feature cleanup (invoked by `/implement-feature`): delete all files in `scratch/`
+- Report: "Cleaned N files from scratch/" or "scratch/ is clean"
+
+### 7. Memory Freshness Check
+
+- If `memory/` directory exists and has files, scan each file for file path references
+- Verify that referenced paths still exist in the project
+- Report stale references as "Needs Attention" — do not auto-fix memory entries (the agent who wrote them had context you may lack)
+
 ## Auto-Fix Policy
 
 **Fix automatically** (and commit):
 - Stale doc references where the correct path is unambiguous (e.g., file was renamed and only one candidate exists)
 - Obvious dead imports within a file (unused import statements)
+- Scratch directory cleanup (delete all files in `scratch/`)
 
 Commit auto-fixes with message: `chore: gardening — <what was fixed>`
 
@@ -75,6 +88,7 @@ Commit auto-fixes with message: `chore: gardening — <what was fixed>`
 - Missing test files (human decides priority)
 - Potential dead code files (human verifies before deletion)
 - Ambiguous stale references (multiple candidates or path was deleted entirely)
+- Stale memory entries (memory was written with context you may not have)
 
 ## Output Format
 
