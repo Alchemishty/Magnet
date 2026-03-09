@@ -10,7 +10,9 @@ fi
 CWD=$(echo "$INPUT" | jq -r '.session.cwd // "."')
 cd "$CWD" || exit 2
 
-if ! bash enforcement/run-all.sh; then
-  echo "Pre-commit enforcement checks failed" >&2
+if ! (bash enforcement/run-all.sh && \
+  cd packages/api && ruff check . && pytest -x && \
+  cd ../../packages/web && npx eslint . && npx vitest run); then
+  echo "Pre-commit checks failed" >&2
   exit 2
 fi

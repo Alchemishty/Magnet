@@ -2,7 +2,9 @@ from typing import Protocol
 
 
 class LLMProvider(Protocol):
-    async def generate(self, messages: list[dict], schema: dict | None = None) -> dict: ...
+    async def generate(
+        self, messages: list[dict], schema: dict | None = None
+    ) -> dict: ...
 
 
 class TTSProvider(Protocol):
