@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+*.egg
+.ruff_cache/
+
+# TypeScript / Node
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Coverage
+htmlcov/
+.coverage
+coverage/
+
+# Build
+build/
+
+# Media (large files)
+*.mp4
+*.mov
+*.avi
+
+# Docker
+docker-compose.override.yml
+
+# MinIO data
+minio_data/

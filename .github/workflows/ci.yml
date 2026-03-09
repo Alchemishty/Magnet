@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  analyze-api:
+    name: Lint API (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - run: pip install ruff
+      - run: cd packages/api && ruff check .
+
+  analyze-web:
+    name: Lint Web (TypeScript)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: cd packages/web && npm install
+      - run: cd packages/web && npx eslint .
+
+  test-api:
+    name: Test API (Python)
+    needs: analyze-api
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - run: cd packages/api && pip install -e ".[dev]"
+      - run: cd packages/api && pytest
+
+  test-web:
+    name: Test Web (TypeScript)
+    needs: analyze-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: cd packages/web && npm install
+      - run: cd packages/web && npx vitest run
+
+  enforcement:
+    name: Enforcement Rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash enforcement/run-all.sh

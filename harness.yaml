@@ -1,0 +1,108 @@
+version: 1
+
+project:
+  name: magnet
+  description: "Agentic AI platform for mobile game UA creative production — generates diverse concepts and produces video ads through COMPOSE/GENERATE/RENDER strategies"
+  type: greenfield
+
+stack:
+  primary:
+    language: python
+    framework: fastapi
+    runtime: "3.10"
+    backend: postgresql
+    orm: sqlalchemy
+    test_framework: pytest
+    linter: ruff
+    formatter: ruff format
+  secondary:
+    language: typescript
+    framework: nextjs
+    runtime: "20.x"
+    test_framework: vitest
+    linter: eslint
+    formatter: prettier
+
+commands:
+  api:
+    install: "cd packages/api && uv sync"
+    analyze: "cd packages/api && ruff check ."
+    format: "cd packages/api && ruff format ."
+    test: "cd packages/api && pytest"
+    test_unit: "cd packages/api && pytest tests/unit/"
+    test_integration: "cd packages/api && pytest tests/integration/"
+    migrate: "cd packages/api && alembic upgrade head"
+  web:
+    install: "cd packages/web && npm install"
+    analyze: "cd packages/web && npx eslint ."
+    format: "cd packages/web && npx prettier --write ."
+    test: "cd packages/web && npx vitest run"
+    build: "cd packages/web && npm run build"
+  all:
+    install: "cd packages/api && uv sync && cd ../../packages/web && npm install"
+    test: "cd packages/api && pytest && cd ../../packages/web && npx vitest run"
+    build: "docker compose build"
+
+platforms:
+  - name: api
+    entry: packages/api/app/main.py
+    targets: [docker]
+    deploy: "docker compose up api"
+  - name: web
+    entry: packages/web/app/page.tsx
+    targets: [docker, vercel]
+    deploy: "docker compose up web"
+  - name: worker
+    entry: packages/api/app/worker.py
+    targets: [docker]
+    deploy: "docker compose up worker"
+
+docs:
+  root: "docs/"
+  architecture: "docs/architecture.md"
+  conventions: "docs/conventions.md"
+  domain: "docs/domain.md"
+  testing: "docs/testing.md"
+  plans_active: "docs/plans/active/"
+  plans_completed: "docs/plans/completed/"
+  decisions: "docs/decisions/"
+  max_doc_lines: 200
+
+enforcement:
+  import_direction:
+    enabled: true
+    api_layers: [models, schemas, repositories, services, agents, routes]
+    web_layers: [models, lib, components, app]
+    rule: "left-to-right only"
+  file_size_limit: 300
+  no_secrets_pattern: "(API_KEY|SECRET|PASSWORD|TOKEN|PRIVATE_KEY)\\s*="
+  custom_rules: "enforcement/"
+
+review:
+  provider: coderabbit
+  auto_address_comments: true
+  max_review_cycles: 3
+
+verification:
+  max_retries: 3
+  on_fail: fix
+  checks:
+    - name: enforcement
+      command: "bash enforcement/run-all.sh"
+    - name: lint_api
+      command: "cd packages/api && ruff check ."
+    - name: test_api
+      command: "cd packages/api && pytest -x"
+    - name: lint_web
+      command: "cd packages/web && npx eslint ."
+    - name: test_web
+      command: "cd packages/web && npx vitest run"
+
+gardening:
+  enabled: true
+  trigger: post-feature
+  checks:
+    - "unused imports and exports"
+    - "files exceeding file_size_limit"
+    - "docs matching actual code structure"
+    - "test coverage gaps"

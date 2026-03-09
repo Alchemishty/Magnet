@@ -1,0 +1,63 @@
+services:
+  api:
+    build: ./packages/api
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./packages/api:/app
+
+  web:
+    build: ./packages/web
+    ports:
+      - "3000:3000"
+    env_file: .env
+    depends_on:
+      - api
+    volumes:
+      - ./packages/web:/app
+
+  worker:
+    build: ./packages/api
+    command: celery -A app.worker worker --loglevel=info
+    env_file: .env
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./packages/api:/app
+
+  postgres:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: magnet
+      POSTGRES_USER: magnet
+      POSTGRES_PASSWORD: magnet
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+volumes:
+  pgdata:
+  minio_data:
