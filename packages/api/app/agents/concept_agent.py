@@ -20,6 +20,13 @@ class ConceptAgentError(Exception):
 
 
 _DIRECTION_REQUIRED_KEYS = {"hook_type", "emotion", "angle"}
+_EXPAND_REQUIRED_FIELDS = {
+    "hook_type",
+    "narrative_angle",
+    "script",
+    "target_emotion",
+}
+_VALID_SCENE_STRATEGIES = {"COMPOSE", "GENERATE", "RENDER"}
 
 
 async def strategize(
@@ -81,6 +88,12 @@ async def expand(
         messages = build_expand_messages(profile_dict, direction)
         response = await llm.generate(messages, schema=EXPAND_SCHEMA)
 
+        for field in _EXPAND_REQUIRED_FIELDS:
+            if not response.get(field):
+                raise ConceptAgentError(
+                    f"Expand response missing required field '{field}'"
+                )
+
         try:
             brief = BriefCreate(
                 project_id=game_profile.project_id,
@@ -115,6 +128,14 @@ async def expand(
             raise ConceptAgentError(
                 "scene_plan must have at least one scene"
             )
+
+        for j, scene in enumerate(scenes):
+            strategy = scene.get("strategy") if isinstance(scene, dict) else None
+            if strategy not in _VALID_SCENE_STRATEGIES:
+                raise ConceptAgentError(
+                    f"Scene {j} has invalid strategy '{strategy}', "
+                    f"expected one of {_VALID_SCENE_STRATEGIES}"
+                )
 
         briefs.append(brief)
 

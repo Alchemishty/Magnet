@@ -85,7 +85,8 @@ suggest how to maximize diversity.
 For each brief, decide whether to:
 - keep: retain the brief as-is (add its index to the "keep" list)
 - mutate: modify the brief to increase diversity (add its index and a mutation \
-description to the "mutate" list, e.g. change hook_type or narrative_angle)
+string in "field:value" format to the "mutate" list, \
+e.g. "hook_type:Emotional" or "narrative_angle:Underdog journey")
 - drop: remove the brief as redundant (add its index to the "drop" list)
 
 Return your response as JSON matching the provided schema."""
