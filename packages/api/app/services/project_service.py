@@ -82,4 +82,6 @@ class ProjectService:
         if profile is None:
             raise NotFoundError("GameProfile", project_id)
         updated = self._profile_repo.update_from_schema(profile.id, data)
+        if updated is None:
+            raise NotFoundError("GameProfile", project_id)
         return updated

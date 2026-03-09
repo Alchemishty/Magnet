@@ -8,6 +8,7 @@ from app.errors import DatabaseError, NotFoundError
 from app.routes.dependencies import get_project_service
 from app.schemas.project import (
     GameProfileCreate,
+    GameProfileCreateBody,
     GameProfileRead,
     GameProfileUpdate,
     ProjectCreate,
@@ -99,10 +100,10 @@ def delete_project(
 )
 def create_game_profile(
     project_id: UUID,
-    body: GameProfileCreate,
+    body: GameProfileCreateBody,
     service: ProjectService = Depends(get_project_service),
 ) -> GameProfileRead:
-    data = body.model_copy(update={"project_id": project_id})
+    data = GameProfileCreate(project_id=project_id, **body.model_dump())
     try:
         result = service.create_game_profile(data)
     except NotFoundError as e:

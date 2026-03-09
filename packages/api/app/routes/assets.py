@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from app.errors import DatabaseError, NotFoundError
 from app.routes.dependencies import get_asset_service
-from app.schemas.asset import AssetCreate, AssetRead
+from app.schemas.asset import AssetCreate, AssetCreateBody, AssetRead
 from app.services.asset_service import AssetService
 
 router = APIRouter(tags=["assets"])
@@ -19,11 +19,11 @@ router = APIRouter(tags=["assets"])
 )
 def create_asset(
     project_id: UUID,
-    body: AssetCreate,
+    body: AssetCreateBody,
     service: AssetService = Depends(get_asset_service),
 ) -> AssetRead:
     """Create a new asset within a project."""
-    data = body.model_copy(update={"project_id": project_id})
+    data = AssetCreate(project_id=project_id, **body.model_dump())
     try:
         asset = service.create_asset(data)
     except NotFoundError as e:

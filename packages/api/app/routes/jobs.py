@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.errors import DatabaseError, NotFoundError
 from app.routes.dependencies import get_job_service
-from app.schemas.job import JobCreate, JobRead, JobUpdate
+from app.schemas.job import JobCreate, JobCreateBody, JobRead, JobUpdate
 from app.services.job_service import JobService
 
 router = APIRouter(tags=["jobs"])
@@ -19,11 +19,11 @@ router = APIRouter(tags=["jobs"])
 )
 def create_job(
     brief_id: UUID,
-    body: JobCreate,
+    body: JobCreateBody,
     service: JobService = Depends(get_job_service),
 ) -> JobRead:
     """Create a render job for a brief."""
-    data = body.model_copy(update={"brief_id": brief_id})
+    data = JobCreate(brief_id=brief_id, **body.model_dump())
     try:
         job = service.create_job(data)
     except NotFoundError as e:

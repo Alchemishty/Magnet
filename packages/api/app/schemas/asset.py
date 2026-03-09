@@ -9,8 +9,7 @@ AssetType = Literal[
 ]
 
 
-class AssetCreate(BaseModel):
-    project_id: UUID
+class AssetCreateBody(BaseModel):
     asset_type: AssetType
     s3_key: str
     filename: str
@@ -20,6 +19,10 @@ class AssetCreate(BaseModel):
     width: int | None = None
     height: int | None = None
     metadata_: dict | None = None
+
+
+class AssetCreate(AssetCreateBody):
+    project_id: UUID
 
 
 class AssetRead(BaseModel):

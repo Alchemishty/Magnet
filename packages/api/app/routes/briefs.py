@@ -2,13 +2,12 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.errors import DatabaseError, NotFoundError, ValidationError
-from app.routes.dependencies import get_brief_service, get_concept_service
+from app.routes.dependencies import get_brief_service
 from app.schemas.brief import BriefRead, BriefUpdate
 from app.services.brief_service import BriefService
-from app.services.concept_service import ConceptService
 
 router = APIRouter(tags=["briefs"])
 
@@ -19,9 +18,9 @@ router = APIRouter(tags=["briefs"])
 )
 def list_briefs(
     project_id: UUID,
-    status: str | None = None,
-    offset: int = 0,
-    limit: int = 100,
+    status: str | None = Query(default=None),
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=1000),
     service: BriefService = Depends(get_brief_service),
 ) -> list[BriefRead]:
     """List briefs for a project, optionally filtered by status."""
@@ -34,19 +33,14 @@ def list_briefs(
 
 @router.post(
     "/api/projects/{project_id}/concepts",
-    response_model=list[BriefRead],
-    status_code=201,
+    status_code=501,
+    responses={501: {"description": "LLM provider not yet configured"}},
 )
-async def generate_concepts(
-    project_id: UUID,
-    service: ConceptService = Depends(get_concept_service),
-) -> list[BriefRead]:
+async def generate_concepts(project_id: UUID) -> dict:
     """Trigger concept generation for a project.
 
-    Requires a configured LLM provider. Currently returns 501
-    until a real provider is wired in.
+    Returns 501 until a real LLM provider is wired in.
     """
-    # TODO: inject real LLM provider via configuration / dependency
     raise HTTPException(
         status_code=501,
         detail="LLM provider not configured",

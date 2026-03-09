@@ -9,10 +9,13 @@ from app.schemas.composition import Composition
 JobStatus = Literal["queued", "rendering", "done", "failed"]
 
 
-class JobCreate(BaseModel):
-    brief_id: UUID
+class JobCreateBody(BaseModel):
     status: JobStatus = "queued"
     composition: Composition | None = None
+
+
+class JobCreate(JobCreateBody):
+    brief_id: UUID
 
 
 class JobRead(BaseModel):
