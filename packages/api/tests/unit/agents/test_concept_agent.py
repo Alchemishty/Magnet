@@ -4,7 +4,12 @@ from uuid import uuid4
 
 import pytest
 
-from app.agents.concept_agent import ConceptAgentError, expand, strategize
+from app.agents.concept_agent import (
+    ConceptAgentError,
+    diversify,
+    expand,
+    strategize,
+)
 from app.schemas.brief import BriefCreate
 from app.schemas.project import GameProfileRead
 from tests.helpers.mocks import MockLLMProvider
@@ -274,3 +279,154 @@ class TestExpand:
 
         with pytest.raises(ConceptAgentError):
             await expand(profile, directions, mock)
+
+
+def _make_test_briefs(count: int = 3) -> list[BriefCreate]:
+    """Create a list of BriefCreate instances for testing."""
+    hook_types = [
+        "Fail/Challenge",
+        "Satisfaction",
+        "Comparison",
+    ]
+    angles = [
+        "Can you beat this?",
+        "So satisfying to watch",
+        "Noob vs Pro",
+    ]
+    return [
+        BriefCreate(
+            project_id=uuid4(),
+            hook_type=hook_types[i % len(hook_types)],
+            narrative_angle=angles[i % len(angles)],
+            script=f"Script {i}",
+            target_emotion="curiosity",
+            cta_text="Download now!",
+            scene_plan={
+                "scenes": [
+                    {
+                        "strategy": "COMPOSE",
+                        "type": "gameplay",
+                        "duration": 10,
+                    }
+                ]
+            },
+            status="draft",
+            generated_by="agent",
+        )
+        for i in range(count)
+    ]
+
+
+class TestDiversify:
+    async def test_keeps_briefs_at_keep_indices(self):
+        briefs = _make_test_briefs(3)
+        response = {
+            "keep": [0, 2],
+            "mutate": [],
+            "drop": [1],
+        }
+        mock = MockLLMProvider(response=response)
+
+        result = await diversify(briefs, mock)
+
+        assert len(result) == 2
+        assert result[0].hook_type == "Fail/Challenge"
+        assert result[1].hook_type == "Comparison"
+
+    async def test_mutates_briefs_at_mutate_indices(self):
+        briefs = _make_test_briefs(3)
+        response = {
+            "keep": [0],
+            "mutate": [
+                {
+                    "index": 1,
+                    "mutation": "hook_type:Emotional",
+                },
+            ],
+            "drop": [2],
+        }
+        mock = MockLLMProvider(response=response)
+
+        result = await diversify(briefs, mock)
+
+        assert len(result) == 2
+        mutated = result[1]
+        assert mutated.hook_type == "Emotional"
+
+    async def test_mutates_narrative_angle(self):
+        briefs = _make_test_briefs(2)
+        response = {
+            "keep": [],
+            "mutate": [
+                {
+                    "index": 0,
+                    "mutation": "narrative_angle:A fresh take",
+                },
+            ],
+            "drop": [1],
+        }
+        mock = MockLLMProvider(response=response)
+
+        result = await diversify(briefs, mock)
+
+        assert len(result) == 1
+        assert result[0].narrative_angle == "A fresh take"
+
+    async def test_drops_briefs_at_drop_indices(self):
+        briefs = _make_test_briefs(3)
+        response = {
+            "keep": [0],
+            "mutate": [],
+            "drop": [1, 2],
+        }
+        mock = MockLLMProvider(response=response)
+
+        result = await diversify(briefs, mock)
+
+        assert len(result) == 1
+        assert result[0].hook_type == "Fail/Challenge"
+
+    async def test_all_kept_no_mutations(self):
+        briefs = _make_test_briefs(3)
+        response = {
+            "keep": [0, 1, 2],
+            "mutate": [],
+            "drop": [],
+        }
+        mock = MockLLMProvider(response=response)
+
+        result = await diversify(briefs, mock)
+
+        assert len(result) == 3
+
+    async def test_out_of_range_index_raises_error(self):
+        briefs = _make_test_briefs(2)
+        response = {
+            "keep": [0, 5],
+            "mutate": [],
+            "drop": [],
+        }
+        mock = MockLLMProvider(response=response)
+
+        with pytest.raises(ConceptAgentError):
+            await diversify(briefs, mock)
+
+    async def test_malformed_response_raises_error(self):
+        briefs = _make_test_briefs(2)
+        mock = MockLLMProvider(response={"bad": "data"})
+
+        with pytest.raises(ConceptAgentError):
+            await diversify(briefs, mock)
+
+    async def test_passes_schema_to_provider(self):
+        briefs = _make_test_briefs(2)
+        response = {
+            "keep": [0, 1],
+            "mutate": [],
+            "drop": [],
+        }
+        mock = MockLLMProvider(response=response)
+
+        await diversify(briefs, mock)
+
+        assert mock.calls[0]["schema"] is not None

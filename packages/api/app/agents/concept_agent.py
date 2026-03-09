@@ -3,8 +3,10 @@
 from pydantic import ValidationError
 
 from app.agents.prompts import (
+    DIVERSIFY_SCHEMA,
     EXPAND_SCHEMA,
     STRATEGIZE_SCHEMA,
+    build_diversify_messages,
     build_expand_messages,
     build_strategize_messages,
 )
@@ -101,3 +103,64 @@ async def expand(
         briefs.append(brief)
 
     return briefs
+
+
+_MUTABLE_FIELDS = {"hook_type", "narrative_angle"}
+
+
+async def diversify(
+    briefs: list[BriefCreate],
+    llm: LLMProvider,
+) -> list[BriefCreate]:
+    """Review briefs for redundancy and apply diversity mutations.
+
+    Returns a filtered/mutated list of BriefCreate schemas.
+    """
+    briefs_dicts = [b.model_dump(mode="json") for b in briefs]
+    messages = build_diversify_messages(briefs_dicts)
+    response = await llm.generate(messages, schema=DIVERSIFY_SCHEMA)
+
+    for key in ("keep", "mutate", "drop"):
+        if key not in response:
+            raise ConceptAgentError(
+                f"Diversify response missing '{key}' key"
+            )
+
+    keep_indices = response["keep"]
+    mutate_entries = response["mutate"]
+    num_briefs = len(briefs)
+
+    # Validate all indices are in range
+    all_indices = list(keep_indices) + [
+        m["index"] for m in mutate_entries
+    ]
+    for idx in all_indices:
+        if idx < 0 or idx >= num_briefs:
+            raise ConceptAgentError(
+                f"Index {idx} out of range for {num_briefs} briefs"
+            )
+
+    result: list[BriefCreate] = []
+
+    # Add kept briefs
+    for idx in keep_indices:
+        result.append(briefs[idx])
+
+    # Add mutated briefs
+    for entry in mutate_entries:
+        idx = entry["index"]
+        mutation = entry.get("mutation", "")
+        brief = briefs[idx].model_copy()
+
+        # Parse mutation string like "field:value"
+        if ":" in mutation:
+            field, value = mutation.split(":", 1)
+            field = field.strip()
+            if field in _MUTABLE_FIELDS:
+                brief = briefs[idx].model_copy(
+                    update={field: value.strip()}
+                )
+
+        result.append(brief)
+
+    return result
