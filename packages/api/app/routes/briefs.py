@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.errors import DatabaseError, NotFoundError, ValidationError
 from app.routes.dependencies import get_brief_service
-from app.schemas.brief import BriefRead, BriefUpdate
+from app.schemas.brief import BriefRead, BriefStatus, BriefUpdate
 from app.services.brief_service import BriefService
 
 router = APIRouter(tags=["briefs"])
@@ -18,7 +18,7 @@ router = APIRouter(tags=["briefs"])
 )
 def list_briefs(
     project_id: UUID,
-    status: str | None = Query(default=None),
+    status: BriefStatus | None = Query(default=None),
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=1000),
     service: BriefService = Depends(get_brief_service),

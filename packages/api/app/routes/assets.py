@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from app.errors import DatabaseError, NotFoundError
 from app.routes.dependencies import get_asset_service
-from app.schemas.asset import AssetCreate, AssetCreateBody, AssetRead
+from app.schemas.asset import AssetCreate, AssetCreateBody, AssetRead, AssetType
 from app.services.asset_service import AssetService
 
 router = APIRouter(tags=["assets"])
@@ -39,7 +39,7 @@ def create_asset(
 )
 def list_assets(
     project_id: UUID,
-    asset_type: str | None = Query(default=None),
+    asset_type: AssetType | None = Query(default=None),
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=1000),
     service: AssetService = Depends(get_asset_service),

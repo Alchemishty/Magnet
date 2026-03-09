@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.errors import NotFoundError
+from app.errors import NotFoundError, ValidationError
 from app.models.project import GameProfile, Project
 from app.repositories.game_profile_repository import GameProfileRepository
 from app.repositories.project_repository import ProjectRepository
@@ -65,6 +65,11 @@ class ProjectService:
         project = self._project_repo.get_by_id(data.project_id)
         if project is None:
             raise NotFoundError("Project", data.project_id)
+        existing = self._profile_repo.get_by_project_id(data.project_id)
+        if existing is not None:
+            raise ValidationError(
+                f"Project {data.project_id} already has a GameProfile"
+            )
         return self._profile_repo.create_from_schema(data)
 
     def get_game_profile(self, project_id: UUID) -> GameProfile:

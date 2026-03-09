@@ -2,9 +2,9 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
-from app.errors import DatabaseError, NotFoundError
+from app.errors import DatabaseError, NotFoundError, ValidationError
 from app.routes.dependencies import get_project_service
 from app.schemas.project import (
     GameProfileCreate,
@@ -38,10 +38,12 @@ def create_project(
 @router.get("", response_model=list[ProjectRead])
 def list_projects(
     user_id: UUID,
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=1000),
     service: ProjectService = Depends(get_project_service),
 ) -> list[ProjectRead]:
     try:
-        results = service.list_projects(user_id)
+        results = service.list_projects(user_id, offset=offset, limit=limit)
     except DatabaseError as e:
         raise HTTPException(status_code=500, detail=e.message)
     return [ProjectRead.model_validate(r) for r in results]
@@ -108,6 +110,8 @@ def create_game_profile(
         result = service.create_game_profile(data)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=e.message)
+    except ValidationError as e:
+        raise HTTPException(status_code=409, detail=e.message)
     except DatabaseError as e:
         raise HTTPException(status_code=500, detail=e.message)
     return GameProfileRead.model_validate(result)

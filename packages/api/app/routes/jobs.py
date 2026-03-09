@@ -6,7 +6,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.errors import DatabaseError, NotFoundError
 from app.routes.dependencies import get_job_service
-from app.schemas.job import JobCreate, JobCreateBody, JobRead, JobUpdate
+from app.schemas.job import (
+    JobCreate,
+    JobCreateBody,
+    JobRead,
+    JobStatus,
+    JobUpdate,
+)
 from app.services.job_service import JobService
 
 router = APIRouter(tags=["jobs"])
@@ -39,7 +45,7 @@ def create_job(
 )
 def list_jobs(
     brief_id: UUID,
-    status: str | None = Query(default=None),
+    status: JobStatus | None = Query(default=None),
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=1000),
     service: JobService = Depends(get_job_service),
