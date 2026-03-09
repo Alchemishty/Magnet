@@ -164,3 +164,24 @@ async def diversify(
         result.append(brief)
 
     return result
+
+
+class ConceptAgent:
+    """Orchestrates the STRATEGIZE -> EXPAND -> DIVERSIFY pipeline.
+
+    Accepts a GameProfileRead and an LLMProvider, returns a list of
+    BriefCreate schemas ready for persistence.
+    """
+
+    def __init__(self, llm: LLMProvider):
+        self.llm = llm
+
+    async def generate_briefs(
+        self, game_profile: GameProfileRead
+    ) -> list[BriefCreate]:
+        """Run the full concept generation pipeline."""
+        directions = await strategize(game_profile, self.llm)
+        briefs = await expand(
+            game_profile, directions, self.llm
+        )
+        return await diversify(briefs, self.llm)
