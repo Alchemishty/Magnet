@@ -12,12 +12,17 @@ class MockLLMProvider:
         response: dict | None = None,
         responses: list[dict] | None = None,
     ):
+        if response is not None and responses is not None:
+            msg = "Provide response or responses, not both"
+            raise ValueError(msg)
+
         if response is not None:
             self._responses = [response]
-            self._cycle = True
         elif responses is not None:
+            if len(responses) == 0:
+                msg = "responses must not be empty"
+                raise ValueError(msg)
             self._responses = list(responses)
-            self._cycle = True
         else:
             msg = "Provide either response or responses"
             raise ValueError(msg)

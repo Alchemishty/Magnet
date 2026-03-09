@@ -46,11 +46,21 @@ async def strategize(
         )
 
     for i, d in enumerate(directions):
+        if not isinstance(d, dict):
+            raise ConceptAgentError(
+                f"Direction {i} is not a dict"
+            )
         missing = _DIRECTION_REQUIRED_KEYS - set(d.keys())
         if missing:
             raise ConceptAgentError(
                 f"Direction {i} missing keys: {missing}"
             )
+        for key in _DIRECTION_REQUIRED_KEYS:
+            if not isinstance(d[key], str) or not d[key].strip():
+                raise ConceptAgentError(
+                    f"Direction {i} has invalid '{key}': "
+                    f"expected non-empty string"
+                )
 
     return directions
 
@@ -100,6 +110,12 @@ async def expand(
                 "Expand response missing scene_plan with scenes"
             )
 
+        scenes = brief.scene_plan["scenes"]
+        if not isinstance(scenes, list) or len(scenes) == 0:
+            raise ConceptAgentError(
+                "scene_plan must have at least one scene"
+            )
+
         briefs.append(brief)
 
     return briefs
@@ -128,17 +144,34 @@ async def diversify(
 
     keep_indices = response["keep"]
     mutate_entries = response["mutate"]
+    drop_indices = response["drop"]
     num_briefs = len(briefs)
 
     # Validate all indices are in range
-    all_indices = list(keep_indices) + [
-        m["index"] for m in mutate_entries
-    ]
+    all_indices = (
+        list(keep_indices)
+        + [m["index"] for m in mutate_entries]
+        + list(drop_indices)
+    )
     for idx in all_indices:
         if idx < 0 or idx >= num_briefs:
             raise ConceptAgentError(
                 f"Index {idx} out of range for {num_briefs} briefs"
             )
+
+    # Validate disjoint partition
+    keep_set = set(keep_indices)
+    mutate_set = {m["index"] for m in mutate_entries}
+    drop_set = set(drop_indices)
+    overlap = (
+        (keep_set & mutate_set)
+        | (keep_set & drop_set)
+        | (mutate_set & drop_set)
+    )
+    if overlap:
+        raise ConceptAgentError(
+            f"Indices {overlap} appear in multiple buckets"
+        )
 
     result: list[BriefCreate] = []
 
