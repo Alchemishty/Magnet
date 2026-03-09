@@ -49,6 +49,11 @@ class BaseRepository(Generic[T]):
             query = self._session.query(self._model_class)
             if filters:
                 for key, value in filters.items():
+                    if not hasattr(self._model_class, key):
+                        raise DatabaseError(
+                            f"Invalid filter key '{key}' for "
+                            f"{self._model_class.__name__}"
+                        )
                     query = query.filter(
                         getattr(self._model_class, key) == value
                     )
@@ -68,6 +73,11 @@ class BaseRepository(Generic[T]):
             if instance is None:
                 return None
             for key, value in data.items():
+                if not hasattr(instance, key):
+                    raise DatabaseError(
+                        f"Invalid attribute '{key}' for "
+                        f"{self._model_class.__name__}"
+                    )
                 setattr(instance, key, value)
             self._session.flush()
             return instance
