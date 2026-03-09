@@ -204,17 +204,23 @@ async def diversify(
     for entry in mutate_entries:
         idx = entry["index"]
         mutation = entry.get("mutation", "")
-        brief = briefs[idx].model_copy()
+        if not isinstance(mutation, str) or ":" not in mutation:
+            raise ConceptAgentError(
+                f"Mutation for brief {idx} must use "
+                f"'field:value' format, got: '{mutation}'"
+            )
 
-        # Parse mutation string like "field:value"
-        if ":" in mutation:
-            field, value = mutation.split(":", 1)
-            field = field.strip()
-            if field in _MUTABLE_FIELDS:
-                brief = briefs[idx].model_copy(
-                    update={field: value.strip()}
-                )
+        field, value = mutation.split(":", 1)
+        field = field.strip()
+        value = value.strip()
+        if field not in _MUTABLE_FIELDS or not value:
+            raise ConceptAgentError(
+                f"Mutation for brief {idx} targets invalid "
+                f"field '{field}' or empty value. "
+                f"Allowed fields: {_MUTABLE_FIELDS}"
+            )
 
+        brief = briefs[idx].model_copy(update={field: value})
         result.append(brief)
 
     return result
