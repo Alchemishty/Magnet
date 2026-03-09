@@ -9,14 +9,17 @@ VIOLATIONS=0
 
 # --- Python (packages/api/) ---
 
-# Layer order (index = rank, lower = deeper)
-declare -A PY_LAYER_RANK
-PY_LAYER_RANK[models]=0
-PY_LAYER_RANK[schemas]=1
-PY_LAYER_RANK[repositories]=2
-PY_LAYER_RANK[services]=3
-PY_LAYER_RANK[agents]=4
-PY_LAYER_RANK[routes]=5
+py_layer_rank() {
+  case "$1" in
+    models) echo 0 ;;
+    schemas) echo 1 ;;
+    repositories) echo 2 ;;
+    services) echo 3 ;;
+    agents) echo 4 ;;
+    routes) echo 5 ;;
+    *) echo "" ;;
+  esac
+}
 
 get_py_layer() {
   local file="$1"
@@ -45,12 +48,12 @@ while IFS= read -r file; do
   [ -z "$file" ] && continue
   src_layer=$(get_py_layer "$file")
   [ -z "$src_layer" ] && continue
-  src_rank=${PY_LAYER_RANK[$src_layer]}
+  src_rank=$(py_layer_rank "$src_layer")
 
   while IFS= read -r line; do
     imported_layer=$(get_imported_py_layer "$line")
     [ -z "$imported_layer" ] && continue
-    imported_rank=${PY_LAYER_RANK[$imported_layer]}
+    imported_rank=$(py_layer_rank "$imported_layer")
 
     if [ "$imported_rank" -gt "$src_rank" ]; then
       line_num=$(grep -n "$line" "$file" | head -1 | cut -d: -f1)
@@ -66,11 +69,15 @@ done < <(find packages/api -name "*.py" -not -path "*/__pycache__/*" -not -path 
 
 # --- TypeScript (packages/web/) ---
 
-declare -A TS_LAYER_RANK
-TS_LAYER_RANK[models]=0
-TS_LAYER_RANK[lib]=1
-TS_LAYER_RANK[components]=2
-TS_LAYER_RANK[app]=3
+ts_layer_rank() {
+  case "$1" in
+    models) echo 0 ;;
+    lib) echo 1 ;;
+    components) echo 2 ;;
+    app) echo 3 ;;
+    *) echo "" ;;
+  esac
+}
 
 get_ts_layer() {
   local file="$1"
@@ -99,12 +106,12 @@ while IFS= read -r file; do
   [ -z "$file" ] && continue
   src_layer=$(get_ts_layer "$file")
   [ -z "$src_layer" ] && continue
-  src_rank=${TS_LAYER_RANK[$src_layer]}
+  src_rank=$(ts_layer_rank "$src_layer")
 
   while IFS= read -r line; do
     imported_layer=$(get_imported_ts_layer "$line")
     [ -z "$imported_layer" ] && continue
-    imported_rank=${TS_LAYER_RANK[$imported_layer]}
+    imported_rank=$(ts_layer_rank "$imported_layer")
 
     if [ "$imported_rank" -gt "$src_rank" ]; then
       line_num=$(grep -n "$line" "$file" | head -1 | cut -d: -f1)
