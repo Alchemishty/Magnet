@@ -56,9 +56,6 @@ class ConceptService:
         profile_schema = GameProfileRead.model_validate(game_profile)
         brief_schemas = await generate_briefs_fn(profile_schema)
 
-        persisted: list[CreativeBrief] = []
-        for schema in brief_schemas:
-            brief = self._brief_repo.create_from_schema(schema)
-            persisted.append(brief)
-
-        return persisted
+        return [
+            self._brief_repo.create_from_schema(s) for s in brief_schemas
+        ]
