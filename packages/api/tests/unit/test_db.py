@@ -31,6 +31,7 @@ class TestDatabaseConfig:
 
         try:
             next(gen)
+            assert False, "get_db() yielded more than once"
         except StopIteration:
             pass
 

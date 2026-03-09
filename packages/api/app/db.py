@@ -9,7 +9,11 @@ DATABASE_URL = os.environ.get(
     "postgresql://magnet:magnet@localhost:5432/magnet",
 )
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    connect_args={"connect_timeout": 5},
+)
 SessionLocal = sessionmaker(bind=engine)
 
 

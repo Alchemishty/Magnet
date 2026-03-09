@@ -91,7 +91,7 @@ Start just the postgres service via `docker compose up -d postgres`. Wait for he
 - `packages/api/tests/integration/test_db_connection.py` (create)
 **What to do:**
 Create a root `conftest.py` that checks for a `TEST_DATABASE_URL` env var. Create an integration `conftest.py` with fixtures: `db_engine` (creates test engine, runs migrations up, yields engine, drops all tables after), `db_session` (yields a session wrapped in a transaction that rolls back after each test — fast isolation). Create a simple integration test that verifies: insert a User, query it back, confirm fields match. Mark integration tests with `@pytest.mark.integration` so they can be skipped when no DB is available.
-**Verify:** `docker compose up -d postgres && cd packages/api && TEST_DATABASE_URL=postgresql://magnet:magnet@localhost:5432/magnet_test pytest tests/integration/ -v`
+**Verify:** `docker compose --profile test up -d test_db && cd packages/api && TEST_DATABASE_URL=postgresql://magnet:magnet@localhost:5433/magnet_test pytest tests/integration/ -v`
 
 ### Step 8: [DONE] Update .env.example with test database URL
 **Files:**

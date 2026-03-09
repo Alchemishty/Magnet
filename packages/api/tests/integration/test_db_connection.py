@@ -2,6 +2,7 @@
 
 import pytest
 from sqlalchemy import text
+from sqlalchemy.orm import sessionmaker
 
 from app.models.user import User
 
@@ -54,7 +55,9 @@ class TestDatabaseConnection:
         assert queried.role == "creator"
         assert queried.id is not None
 
-    def test_session_rollback_isolation(self, db_session):
+    def test_session_rollback_isolation(
+        self, db_session, db_engine
+    ):
         user = User(
             email="rollback@test.com",
             name="Rollback Test",
@@ -62,6 +65,20 @@ class TestDatabaseConnection:
         db_session.add(user)
         db_session.flush()
 
-        count = db_session.query(User).count()
+        assert db_session.query(User).count() >= 1
 
-        assert count >= 1
+        # Verify via a separate connection that the row
+        # is NOT visible outside the transaction
+        fresh_session = sessionmaker(bind=db_engine)()
+        try:
+            count = (
+                fresh_session.query(User)
+                .filter_by(email="rollback@test.com")
+                .count()
+            )
+            assert count == 0, (
+                "Row should not be visible outside the "
+                "uncommitted transaction"
+            )
+        finally:
+            fresh_session.close()
