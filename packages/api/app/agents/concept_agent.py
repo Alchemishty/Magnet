@@ -20,6 +20,15 @@ class ConceptAgentError(Exception):
 
 
 _DIRECTION_REQUIRED_KEYS = {"hook_type", "emotion", "angle"}
+_SCENE_REQUIRED_KEYS = {"strategy", "type", "duration"}
+
+
+def _ensure_dict(response: object, step: str) -> dict:
+    if not isinstance(response, dict):
+        raise ConceptAgentError(
+            f"{step} response is not a dict: {type(response).__name__}"
+        )
+    return response
 _EXPAND_REQUIRED_FIELDS = {
     "hook_type",
     "narrative_angle",
@@ -39,7 +48,10 @@ async def strategize(
     """
     profile_dict = game_profile.model_dump(mode="json")
     messages = build_strategize_messages(profile_dict)
-    response = await llm.generate(messages, schema=STRATEGIZE_SCHEMA)
+    response = _ensure_dict(
+        await llm.generate(messages, schema=STRATEGIZE_SCHEMA),
+        "STRATEGIZE",
+    )
 
     if "directions" not in response:
         raise ConceptAgentError(
@@ -86,7 +98,10 @@ async def expand(
 
     for direction in directions:
         messages = build_expand_messages(profile_dict, direction)
-        response = await llm.generate(messages, schema=EXPAND_SCHEMA)
+        response = _ensure_dict(
+            await llm.generate(messages, schema=EXPAND_SCHEMA),
+            "EXPAND",
+        )
 
         for field in _EXPAND_REQUIRED_FIELDS:
             if not response.get(field):
@@ -130,10 +145,19 @@ async def expand(
             )
 
         for j, scene in enumerate(scenes):
-            strategy = scene.get("strategy") if isinstance(scene, dict) else None
-            if strategy not in _VALID_SCENE_STRATEGIES:
+            if not isinstance(scene, dict):
                 raise ConceptAgentError(
-                    f"Scene {j} has invalid strategy '{strategy}', "
+                    f"Scene {j} is not a dict"
+                )
+            missing = _SCENE_REQUIRED_KEYS - set(scene.keys())
+            if missing:
+                raise ConceptAgentError(
+                    f"Scene {j} missing keys: {missing}"
+                )
+            if scene["strategy"] not in _VALID_SCENE_STRATEGIES:
+                raise ConceptAgentError(
+                    f"Scene {j} has invalid strategy "
+                    f"'{scene['strategy']}', "
                     f"expected one of {_VALID_SCENE_STRATEGIES}"
                 )
 
@@ -155,7 +179,10 @@ async def diversify(
     """
     briefs_dicts = [b.model_dump(mode="json") for b in briefs]
     messages = build_diversify_messages(briefs_dicts)
-    response = await llm.generate(messages, schema=DIVERSIFY_SCHEMA)
+    response = _ensure_dict(
+        await llm.generate(messages, schema=DIVERSIFY_SCHEMA),
+        "DIVERSIFY",
+    )
 
     for key in ("keep", "mutate", "drop"):
         if key not in response:
@@ -166,9 +193,22 @@ async def diversify(
     keep_indices = response["keep"]
     mutate_entries = response["mutate"]
     drop_indices = response["drop"]
+
+    if not isinstance(keep_indices, list):
+        raise ConceptAgentError("'keep' must be a list")
+    if not isinstance(mutate_entries, list):
+        raise ConceptAgentError("'mutate' must be a list")
+    if not isinstance(drop_indices, list):
+        raise ConceptAgentError("'drop' must be a list")
+
+    for i, m in enumerate(mutate_entries):
+        if not isinstance(m, dict) or "index" not in m:
+            raise ConceptAgentError(
+                f"mutate entry {i} must be a dict with 'index'"
+            )
+
     num_briefs = len(briefs)
 
-    # Validate all indices are in range
     all_indices = (
         list(keep_indices)
         + [m["index"] for m in mutate_entries]
