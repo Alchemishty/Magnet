@@ -51,7 +51,14 @@ git remote get-url origin
 3. Confirm with the human: "I found N steps in the plan. Proceeding with implementation."
 
 ### Create task list
-Create a task list from the plan steps. Each step becomes a task. This tracks progress visibly throughout the workflow.
+Create a task list from the plan steps. Each step becomes a task. **Also create completion tasks for post-implementation phases** — these ensure cleanup, archival, and retrospective don't get skipped when the user sends ad-hoc requests late in the workflow.
+
+Required tasks:
+- One task per implementation step (from the plan)
+- "Move plan to completed" (after all implementation tasks)
+- "Run retrospective" (after plan move)
+
+The completion tasks act as visible reminders. Do NOT mark them complete until the actual work is done — even if the user asks for other things in between.
 
 ### Create a feature branch
 ```bash
