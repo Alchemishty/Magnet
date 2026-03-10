@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from app.agents.concept_agent import ConceptAgent
 from app.db import get_db
 from app.providers.llm import get_llm_provider as _get_llm_provider
+from app.repositories.s3_client import S3Client
+from app.repositories.s3_client import get_s3_client as _get_s3_client
 from app.services.asset_service import AssetService
 from app.services.brief_service import BriefService
 from app.services.concept_service import ConceptService
@@ -44,6 +46,10 @@ def get_job_service(
     db: Session = Depends(get_db),
 ) -> Generator[JobService, None, None]:
     yield JobService(db)
+
+
+def get_s3_client() -> S3Client:
+    return _get_s3_client()
 
 
 def get_task_dispatcher() -> Callable[[str], object]:

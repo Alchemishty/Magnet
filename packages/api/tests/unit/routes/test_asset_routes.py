@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from app.errors import NotFoundError
 from app.routes.assets import router
-from app.routes.dependencies import get_asset_service
+from app.routes.dependencies import get_asset_service, get_s3_client
 
 
 def _make_asset(**overrides):
@@ -42,10 +42,16 @@ def mock_service():
 
 
 @pytest.fixture()
-def client(mock_service):
+def mock_s3():
+    return MagicMock()
+
+
+@pytest.fixture()
+def client(mock_service, mock_s3):
     test_app = FastAPI()
     test_app.include_router(router)
     test_app.dependency_overrides[get_asset_service] = lambda: mock_service
+    test_app.dependency_overrides[get_s3_client] = lambda: mock_s3
     return TestClient(test_app)
 
 
@@ -164,5 +170,61 @@ class TestDeleteAsset:
         mock_service.delete_asset.side_effect = NotFoundError("Asset", asset_id)
 
         response = client.delete(f"/api/assets/{asset_id}")
+
+        assert response.status_code == 404
+
+
+class TestPresignedUpload:
+    def test_returns_presigned_url(self, client, mock_s3):
+        project_id = uuid4()
+        mock_s3.generate_presigned_upload_url.return_value = "https://s3/put"
+
+        response = client.post(
+            f"/api/projects/{project_id}/assets/presigned-upload",
+            json={
+                "filename": "clip.mp4",
+                "content_type": "video/mp4",
+                "asset_type": "gameplay",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["upload_url"] == "https://s3/put"
+        assert data["s3_key"].startswith(f"uploads/{project_id}/")
+        assert data["s3_key"].endswith("_clip.mp4")
+
+    def test_rejects_invalid_asset_type(self, client, mock_s3):
+        response = client.post(
+            f"/api/projects/{uuid4()}/assets/presigned-upload",
+            json={
+                "filename": "clip.mp4",
+                "content_type": "video/mp4",
+                "asset_type": "invalid",
+            },
+        )
+
+        assert response.status_code == 422
+
+
+class TestDownloadUrl:
+    def test_returns_download_url(self, client, mock_service, mock_s3):
+        asset = _make_asset()
+        mock_service.get_asset.return_value = asset
+        mock_s3.generate_presigned_download_url.return_value = "https://s3/get"
+
+        response = client.get(f"/api/assets/{asset.id}/download-url")
+
+        assert response.status_code == 200
+        assert response.json()["download_url"] == "https://s3/get"
+        mock_s3.generate_presigned_download_url.assert_called_once_with(
+            asset.s3_key
+        )
+
+    def test_not_found_returns_404(self, client, mock_service, mock_s3):
+        asset_id = uuid4()
+        mock_service.get_asset.side_effect = NotFoundError("Asset", asset_id)
+
+        response = client.get(f"/api/assets/{asset_id}/download-url")
 
         assert response.status_code == 404
