@@ -4,10 +4,21 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.errors import DatabaseError, NotFoundError, ValidationError
-from app.routes.dependencies import get_brief_service
+from app.agents.concept_agent import ConceptAgent, ConceptAgentError
+from app.errors import (
+    DatabaseError,
+    ExternalProviderError,
+    NotFoundError,
+    ValidationError,
+)
+from app.routes.dependencies import (
+    get_brief_service,
+    get_concept_agent,
+    get_concept_service,
+)
 from app.schemas.brief import BriefRead, BriefStatus, BriefUpdate
 from app.services.brief_service import BriefService
+from app.services.concept_service import ConceptService
 
 router = APIRouter(tags=["briefs"])
 
@@ -33,18 +44,28 @@ def list_briefs(
 
 @router.post(
     "/api/projects/{project_id}/concepts",
-    status_code=501,
-    responses={501: {"description": "LLM provider not yet configured"}},
+    response_model=list[BriefRead],
+    status_code=201,
 )
-async def generate_concepts(project_id: UUID) -> dict:
-    """Trigger concept generation for a project.
-
-    Returns 501 until a real LLM provider is wired in.
-    """
-    raise HTTPException(
-        status_code=501,
-        detail="LLM provider not configured",
-    )
+async def generate_concepts(
+    project_id: UUID,
+    service: ConceptService = Depends(get_concept_service),
+    agent: ConceptAgent = Depends(get_concept_agent),
+) -> list[BriefRead]:
+    """Trigger concept generation for a project."""
+    try:
+        briefs = await service.generate_concepts(
+            project_id, agent.generate_briefs
+        )
+        return [BriefRead.model_validate(b) for b in briefs]
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.message)
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail=e.message)
+    except ExternalProviderError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except ConceptAgentError as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
 
 @router.get(
