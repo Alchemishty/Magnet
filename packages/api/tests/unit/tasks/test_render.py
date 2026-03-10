@@ -1,6 +1,6 @@
 """Unit tests for the render task."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -150,3 +150,39 @@ class TestProcessRenderJob:
 
         with pytest.raises(ValueError, match="CreativeBrief"):
             process_render_job(str(job_id))
+
+
+class TestRunVideoAgentS3Wiring:
+    @patch("app.tasks.render._cleanup_providers", new_callable=AsyncMock)
+    @patch("app.tasks.render.SessionLocal")
+    @patch("app.repositories.s3_client.get_s3_client")
+    @patch("app.providers.image.get_image_provider")
+    @patch("app.providers.music.get_music_provider")
+    @patch("app.providers.tts.get_tts_provider")
+    @patch("app.schemas.brief.BriefRead.model_validate")
+    @patch("app.agents.video_agent.VideoAgent")
+    def test_passes_s3_client_to_video_agent(
+        self, mock_agent_cls, mock_validate, mock_tts,
+        mock_music, mock_image, mock_get_s3,
+        mock_session_cls, mock_cleanup,
+    ):
+        mock_s3 = MagicMock()
+        mock_get_s3.return_value = mock_s3
+        mock_session_cls.return_value = MagicMock()
+        mock_validate.return_value = MagicMock()
+
+        mock_agent = MagicMock()
+        mock_agent.produce = AsyncMock(
+            return_value=("key", MagicMock())
+        )
+        mock_agent_cls.return_value = mock_agent
+
+        brief = MagicMock()
+
+        from app.tasks.render import _run_video_agent
+
+        _run_video_agent(brief, "job-1")
+
+        mock_agent_cls.assert_called_once()
+        call_kwargs = mock_agent_cls.call_args[1]
+        assert call_kwargs["s3_client"] is mock_s3
