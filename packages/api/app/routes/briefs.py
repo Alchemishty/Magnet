@@ -54,9 +54,7 @@ async def generate_concepts(
 ) -> list[BriefRead]:
     """Trigger concept generation for a project."""
     try:
-        briefs = await service.generate_concepts(
-            project_id, agent.generate_briefs
-        )
+        briefs = await service.generate_concepts(project_id, agent.generate_briefs)
         return [BriefRead.model_validate(b) for b in briefs]
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=e.message)

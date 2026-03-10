@@ -64,9 +64,7 @@ class TestClaudeProviderGenerate:
         with patch.object(
             provider._client, "post", new_callable=AsyncMock, return_value=mock_response
         ):
-            result = await provider.generate(
-                [{"role": "user", "content": "hello"}]
-            )
+            result = await provider.generate([{"role": "user", "content": "hello"}])
 
         assert result == expected
 
@@ -94,25 +92,30 @@ class TestClaudeProviderGenerate:
         with patch.object(
             provider._client, "post", new_callable=AsyncMock, return_value=mock_response
         ) as mock_post:
-            await provider.generate([
-                {"role": "system", "content": "You are helpful."},
-                {"role": "user", "content": "hi"},
-            ])
+            await provider.generate(
+                [
+                    {"role": "system", "content": "You are helpful."},
+                    {"role": "user", "content": "hi"},
+                ]
+            )
 
         call_body = mock_post.call_args[1]["json"]
         assert call_body["system"] == "You are helpful."
         assert all(m["role"] != "system" for m in call_body["messages"])
 
     async def test_http_error_raises_external_provider_error(self, provider):
-        error_response = httpx.Response(429, json={"error": {"message": "rate limited"}})
+        error_response = httpx.Response(
+            429, json={"error": {"message": "rate limited"}}
+        )
 
         with patch.object(
-            provider._client, "post", new_callable=AsyncMock, return_value=error_response
+            provider._client,
+            "post",
+            new_callable=AsyncMock,
+            return_value=error_response,
         ):
             with pytest.raises(ExternalProviderError, match="claude"):
-                await provider.generate(
-                    [{"role": "user", "content": "hello"}]
-                )
+                await provider.generate([{"role": "user", "content": "hello"}])
 
     async def test_invalid_json_raises_external_provider_error(self, provider):
         bad_response = httpx.Response(
@@ -127,9 +130,7 @@ class TestClaudeProviderGenerate:
             provider._client, "post", new_callable=AsyncMock, return_value=bad_response
         ):
             with pytest.raises(ExternalProviderError, match="claude"):
-                await provider.generate(
-                    [{"role": "user", "content": "hello"}]
-                )
+                await provider.generate([{"role": "user", "content": "hello"}])
 
     async def test_unexpected_content_type_raises(self, provider):
         bad_response = httpx.Response(
@@ -144,6 +145,4 @@ class TestClaudeProviderGenerate:
             provider._client, "post", new_callable=AsyncMock, return_value=bad_response
         ):
             with pytest.raises(ExternalProviderError, match="claude"):
-                await provider.generate(
-                    [{"role": "user", "content": "hello"}]
-                )
+                await provider.generate([{"role": "user", "content": "hello"}])

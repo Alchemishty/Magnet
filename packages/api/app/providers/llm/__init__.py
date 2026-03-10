@@ -23,8 +23,7 @@ def get_llm_provider() -> ClaudeProvider | OpenAIProvider:
 
     if provider_name not in _PROVIDERS:
         raise ValueError(
-            f"Unknown LLM_PROVIDER '{provider_name}'. "
-            f"Supported: {sorted(_PROVIDERS)}"
+            f"Unknown LLM_PROVIDER '{provider_name}'. Supported: {sorted(_PROVIDERS)}"
         )
 
     key_env, provider_cls = _PROVIDERS[provider_name]

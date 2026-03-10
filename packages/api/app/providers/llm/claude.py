@@ -27,9 +27,7 @@ class ClaudeProvider:
             timeout=120.0,
         )
 
-    async def generate(
-        self, messages: list[dict], schema: dict | None = None
-    ) -> dict:
+    async def generate(self, messages: list[dict], schema: dict | None = None) -> dict:
         system = None
         filtered: list[dict] = []
         for m in messages:
@@ -92,9 +90,7 @@ def _parse_response(data: dict, expect_tool_use: bool) -> dict:
             )
         result = block.get("input")
         if not isinstance(result, dict):
-            raise ExternalProviderError(
-                "claude", "Tool use block has no input dict"
-            )
+            raise ExternalProviderError("claude", "Tool use block has no input dict")
         return result
 
     if block.get("type") != "text":

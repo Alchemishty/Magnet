@@ -9,7 +9,12 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.agents.concept_agent import ConceptAgentError
-from app.errors import DatabaseError, ExternalProviderError, NotFoundError, ValidationError
+from app.errors import (
+    DatabaseError,
+    ExternalProviderError,
+    NotFoundError,
+    ValidationError,
+)
 from app.routes.briefs import router
 from app.routes.dependencies import (
     get_brief_service,
@@ -74,12 +79,8 @@ def client(mock_brief_service, mock_concept_service, mock_concept_agent):
     test_app = FastAPI()
     test_app.include_router(router)
     test_app.dependency_overrides[get_brief_service] = lambda: mock_brief_service
-    test_app.dependency_overrides[get_concept_service] = (
-        lambda: mock_concept_service
-    )
-    test_app.dependency_overrides[get_concept_agent] = (
-        lambda: mock_concept_agent
-    )
+    test_app.dependency_overrides[get_concept_service] = lambda: mock_concept_service
+    test_app.dependency_overrides[get_concept_agent] = lambda: mock_concept_agent
     return TestClient(test_app)
 
 
@@ -99,9 +100,7 @@ class TestListBriefs:
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 3
-        mock_brief_service.list_briefs.assert_called_once_with(
-            project_id, None, 0, 100
-        )
+        mock_brief_service.list_briefs.assert_called_once_with(project_id, None, 0, 100)
 
     def test_passes_query_params(self, client, mock_brief_service):
         project_id = uuid4()
@@ -166,11 +165,9 @@ class TestGenerateConcepts:
 
         assert resp.status_code == 422
 
-    def test_external_provider_error_returns_502(
-        self, client, mock_concept_service
-    ):
-        mock_concept_service.generate_concepts.side_effect = (
-            ExternalProviderError("claude", "rate limited")
+    def test_external_provider_error_returns_502(self, client, mock_concept_service):
+        mock_concept_service.generate_concepts.side_effect = ExternalProviderError(
+            "claude", "rate limited"
         )
 
         resp = client.post(f"/api/projects/{uuid4()}/concepts")
@@ -178,11 +175,9 @@ class TestGenerateConcepts:
         assert resp.status_code == 502
         assert "claude" in resp.json()["detail"]
 
-    def test_concept_agent_error_returns_502(
-        self, client, mock_concept_service
-    ):
-        mock_concept_service.generate_concepts.side_effect = (
-            ConceptAgentError("malformed response")
+    def test_concept_agent_error_returns_502(self, client, mock_concept_service):
+        mock_concept_service.generate_concepts.side_effect = ConceptAgentError(
+            "malformed response"
         )
 
         resp = client.post(f"/api/projects/{uuid4()}/concepts")

@@ -53,9 +53,7 @@ class TestOpenAIProviderGenerate:
         with patch.object(
             provider._client, "post", new_callable=AsyncMock, return_value=mock_response
         ):
-            result = await provider.generate(
-                [{"role": "user", "content": "hello"}]
-            )
+            result = await provider.generate([{"role": "user", "content": "hello"}])
 
         assert result == expected
 
@@ -104,12 +102,13 @@ class TestOpenAIProviderGenerate:
         )
 
         with patch.object(
-            provider._client, "post", new_callable=AsyncMock, return_value=error_response
+            provider._client,
+            "post",
+            new_callable=AsyncMock,
+            return_value=error_response,
         ):
             with pytest.raises(ExternalProviderError, match="openai"):
-                await provider.generate(
-                    [{"role": "user", "content": "hello"}]
-                )
+                await provider.generate([{"role": "user", "content": "hello"}])
 
     async def test_invalid_json_raises_external_provider_error(self, provider):
         bad_response = httpx.Response(
@@ -131,9 +130,7 @@ class TestOpenAIProviderGenerate:
             provider._client, "post", new_callable=AsyncMock, return_value=bad_response
         ):
             with pytest.raises(ExternalProviderError, match="openai"):
-                await provider.generate(
-                    [{"role": "user", "content": "hello"}]
-                )
+                await provider.generate([{"role": "user", "content": "hello"}])
 
     async def test_empty_choices_raises(self, provider):
         bad_response = httpx.Response(200, json={"choices": []})
@@ -142,6 +139,4 @@ class TestOpenAIProviderGenerate:
             provider._client, "post", new_callable=AsyncMock, return_value=bad_response
         ):
             with pytest.raises(ExternalProviderError, match="openai"):
-                await provider.generate(
-                    [{"role": "user", "content": "hello"}]
-                )
+                await provider.generate([{"role": "user", "content": "hello"}])
