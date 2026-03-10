@@ -33,7 +33,7 @@ All resolved:
 
 ## Steps
 
-### Step 1: Scene plan and execution plan schemas
+### Step 1: [DONE] Scene plan and execution plan schemas
 **Files:**
 - `packages/api/app/schemas/scene_plan.py` (create)
 - `packages/api/app/schemas/execution_plan.py` (create)
@@ -59,7 +59,7 @@ Tests: Validate construction, required fields, strategy enum validation, scene_p
 
 **Verify:** `cd packages/api && pytest tests/unit/schemas/test_scene_plan.py tests/unit/schemas/test_execution_plan.py -v`
 
-### Step 2: TTS provider (ElevenLabs)
+### Step 2: [DONE] TTS provider (ElevenLabs)
 **Files:**
 - `packages/api/app/providers/tts/__init__.py` (create)
 - `packages/api/app/providers/tts/elevenlabs.py` (create)
@@ -85,7 +85,7 @@ Tests: Mock httpx calls, verify request format, verify `aclose()` closes client,
 
 **Verify:** `cd packages/api && pytest tests/unit/providers/test_elevenlabs.py tests/unit/providers/test_tts_factory.py -v`
 
-### Step 3: Music and image provider stubs
+### Step 3: [DONE] Music and image provider stubs
 **Files:**
 - `packages/api/app/providers/music/__init__.py` (create)
 - `packages/api/app/providers/music/stub.py` (create)
@@ -113,7 +113,7 @@ Tests: Verify returned bytes are valid WAV/PNG, correct dimensions/duration, fac
 
 **Verify:** `cd packages/api && pytest tests/unit/providers/test_music_stub.py tests/unit/providers/test_image_stub.py -v`
 
-### Step 4: Programmatic template renderers
+### Step 4: [DONE] Programmatic template renderers
 **Files:**
 - `packages/api/app/rendering/templates/__init__.py` (create)
 - `packages/api/app/rendering/templates/base.py` (create)
@@ -149,7 +149,7 @@ Tests: Verify renderers produce non-empty bytes, correct frame count for duratio
 
 **Verify:** `cd packages/api && pytest tests/unit/rendering/test_text_hook.py tests/unit/rendering/test_endcard.py -v`
 
-### Step 5: FFmpeg assembler
+### Step 5: [DONE] FFmpeg assembler
 **Files:**
 - `packages/api/app/rendering/assembler.py` (create)
 
@@ -181,7 +181,7 @@ Tests: Unit tests mock `subprocess.run` to verify correct FFmpeg command constru
 
 **Verify:** `cd packages/api && pytest tests/unit/rendering/test_assembler.py -v`
 
-### Step 6: Video Agent — PLAN phase
+### Step 6: [DONE] Video Agent — PLAN phase
 **Files:**
 - `packages/api/app/agents/video_agent.py` (create)
 
@@ -209,7 +209,7 @@ Tests: Test plan phase with valid scene_plan produces correct ExecutionPlan. Tes
 
 **Verify:** `cd packages/api && pytest tests/unit/agents/test_video_agent_plan.py -v`
 
-### Step 7: Video Agent — PREPARE phase
+### Step 7: [DONE] Video Agent — PREPARE phase
 **Files:**
 - `packages/api/app/agents/video_agent.py` (modify)
 
@@ -236,7 +236,7 @@ Tests: Mock all providers. Test COMPOSE scene preparation writes file and sets s
 
 **Verify:** `cd packages/api && pytest tests/unit/agents/test_video_agent_prepare.py -v`
 
-### Step 8: Video Agent — ASSEMBLE, POST-PROCESS, and Celery integration
+### Step 8: [DONE] Video Agent — ASSEMBLE, POST-PROCESS, and Celery integration
 **Files:**
 - `packages/api/app/agents/video_agent.py` (modify)
 - `packages/api/app/tasks/render.py` (modify)
@@ -301,4 +301,6 @@ Expected outcomes:
 
 ## Decision Log
 
-(Empty — decisions will be recorded during implementation)
+1. **Test frame resolution reduced** — Template renderer tests originally used 1080x1920 at 30fps which caused OOM when running the full test suite (432+ tests). Reduced to 100x100 at 10fps for unit tests. Production resolution is validated by the schema, not the unit tests.
+2. **asyncio.run() bridge in Celery task** — Celery tasks are synchronous but providers are async. Used `asyncio.run()` to bridge, with provider cleanup in a separate `asyncio.run()` call in the `finally` block.
+3. **Lazy imports in render task** — Provider factories and VideoAgent are imported inside `_run_video_agent()` to avoid circular imports and heavy module loading at worker startup.
