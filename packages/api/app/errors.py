@@ -31,3 +31,11 @@ class ExternalProviderError(Exception):
         self.provider_name = provider_name
         self.message = message
         super().__init__(f"{provider_name}: {message}")
+
+
+class StorageError(Exception):
+    """Wraps S3/storage errors at the repository boundary."""
+
+    def __init__(self, message: str = "A storage error occurred"):
+        self.message = message
+        super().__init__(self.message)
