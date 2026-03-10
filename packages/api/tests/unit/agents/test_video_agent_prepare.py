@@ -112,13 +112,13 @@ class TestPrepareAudio:
         plan = ExecutionPlan(
             brief_id=uuid4(),
             project_id=uuid4(),
-            scenes=[PreparedScene(index=0, strategy="RENDER")],
+            scenes=[PreparedScene(index=0, strategy="GENERATE")],
             audio=[PreparedAudio(type="voiceover")],
             work_dir=tempfile.mkdtemp(),
         )
         scene_plan = ScenePlan(
-            scenes=[Scene(strategy="RENDER", type="hook", duration=2.0,
-                          template="text_hook", params={"text": "Hi"})],
+            scenes=[Scene(strategy="GENERATE", type="hook", duration=2.0,
+                          prompt="test image")],
             audio=AudioPlan(
                 voiceover=VoiceoverPlan(
                     generator="elevenlabs",
@@ -139,13 +139,13 @@ class TestPrepareAudio:
         plan = ExecutionPlan(
             brief_id=uuid4(),
             project_id=uuid4(),
-            scenes=[PreparedScene(index=0, strategy="RENDER")],
+            scenes=[PreparedScene(index=0, strategy="GENERATE")],
             audio=[PreparedAudio(type="music")],
             work_dir=tempfile.mkdtemp(),
         )
         scene_plan = ScenePlan(
-            scenes=[Scene(strategy="RENDER", type="hook", duration=5.0,
-                          template="text_hook", params={"text": "Hi"})],
+            scenes=[Scene(strategy="GENERATE", type="hook", duration=5.0,
+                          prompt="test image")],
             audio=AudioPlan(
                 music=MusicPlan(
                     generator="suno",
