@@ -146,6 +146,17 @@ class MockLLMProvider:
         return self.response
 ```
 
+### Mocking Async Services in Route Tests
+
+When mocking services that have `async` methods (e.g., `ConceptService.generate_concepts`), use `AsyncMock()` from `unittest.mock` — not `MagicMock()`. `MagicMock` return values are not awaitable and will raise `TypeError` at runtime.
+
+```python
+from unittest.mock import AsyncMock, MagicMock
+
+mock_brief_service = MagicMock()      # sync methods — fine
+mock_concept_service = AsyncMock()    # async methods — must use AsyncMock
+```
+
 ---
 
 ## Running Tests
