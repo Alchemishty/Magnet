@@ -48,3 +48,14 @@ class AssetUpdate(BaseModel):
     width: int | None = None
     height: int | None = None
     metadata_: dict | None = None
+
+
+class PresignedUploadRequest(BaseModel):
+    filename: str
+    content_type: str
+    asset_type: AssetType
+
+
+class PresignedUploadResponse(BaseModel):
+    upload_url: str
+    s3_key: str
