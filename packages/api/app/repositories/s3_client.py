@@ -33,9 +33,15 @@ class S3Client:
     def _ensure_bucket(self) -> None:
         try:
             self._client.head_bucket(Bucket=self._bucket)
-        except ClientError:
-            logger.info("Bucket %s not found, creating", self._bucket)
-            self._client.create_bucket(Bucket=self._bucket)
+        except ClientError as e:
+            code = e.response.get("Error", {}).get("Code", "")
+            if code in {"404", "NoSuchBucket"}:
+                logger.info("Bucket %s not found, creating", self._bucket)
+                self._client.create_bucket(Bucket=self._bucket)
+            else:
+                raise StorageError(
+                    f"Failed to check bucket {self._bucket}: {e}"
+                ) from e
 
     def upload_file(self, local_path: str, s3_key: str) -> str:
         try:
@@ -82,8 +88,13 @@ class S3Client:
     def head_object(self, s3_key: str) -> dict | None:
         try:
             return self._client.head_object(Bucket=self._bucket, Key=s3_key)
-        except ClientError:
-            return None
+        except ClientError as e:
+            code = e.response.get("Error", {}).get("Code", "")
+            if code in {"404", "NoSuchKey", "NotFound"}:
+                return None
+            raise StorageError(
+                f"Failed to head {s3_key}: {e}"
+            ) from e
 
 
 def get_s3_client() -> S3Client:

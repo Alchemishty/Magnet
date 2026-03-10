@@ -5,7 +5,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.errors import NotFoundError, StorageError
+from app.errors import NotFoundError
 from app.models.asset import Asset
 from app.repositories.asset_repository import AssetRepository
 from app.repositories.project_repository import ProjectRepository
@@ -62,5 +62,5 @@ class AssetService:
         if self._s3:
             try:
                 self._s3.delete_object(s3_key)
-            except StorageError:
+            except Exception:
                 logger.warning("Failed to delete S3 object %s", s3_key)

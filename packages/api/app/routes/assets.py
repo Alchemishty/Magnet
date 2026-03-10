@@ -6,7 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from app.errors import DatabaseError, NotFoundError
 from app.repositories.s3_client import S3Client
-from app.routes.dependencies import get_asset_service, get_s3_client
+from app.routes.dependencies import (
+    get_asset_service,
+    get_project_service,
+    get_s3_client,
+)
 from app.schemas.asset import (
     AssetCreate,
     AssetCreateBody,
@@ -16,6 +20,7 @@ from app.schemas.asset import (
     PresignedUploadResponse,
 )
 from app.services.asset_service import AssetService
+from app.services.project_service import ProjectService
 
 router = APIRouter(tags=["assets"])
 
@@ -105,9 +110,14 @@ def delete_asset(
 def presigned_upload(
     project_id: UUID,
     body: PresignedUploadRequest,
+    project_service: ProjectService = Depends(get_project_service),
     s3: S3Client = Depends(get_s3_client),
 ) -> PresignedUploadResponse:
     """Generate a presigned URL for direct-to-S3 asset upload."""
+    try:
+        project_service.get_project(project_id)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.message)
     s3_key = f"uploads/{project_id}/{uuid4()}_{body.filename}"
     upload_url = s3.generate_presigned_upload_url(s3_key, body.content_type)
     return PresignedUploadResponse(upload_url=upload_url, s3_key=s3_key)

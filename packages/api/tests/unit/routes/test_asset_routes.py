@@ -10,7 +10,11 @@ from fastapi.testclient import TestClient
 
 from app.errors import NotFoundError
 from app.routes.assets import router
-from app.routes.dependencies import get_asset_service, get_s3_client
+from app.routes.dependencies import (
+    get_asset_service,
+    get_project_service,
+    get_s3_client,
+)
 
 
 def _make_asset(**overrides):
@@ -42,15 +46,21 @@ def mock_service():
 
 
 @pytest.fixture()
+def mock_project_service():
+    return MagicMock()
+
+
+@pytest.fixture()
 def mock_s3():
     return MagicMock()
 
 
 @pytest.fixture()
-def client(mock_service, mock_s3):
+def client(mock_service, mock_project_service, mock_s3):
     test_app = FastAPI()
     test_app.include_router(router)
     test_app.dependency_overrides[get_asset_service] = lambda: mock_service
+    test_app.dependency_overrides[get_project_service] = lambda: mock_project_service
     test_app.dependency_overrides[get_s3_client] = lambda: mock_s3
     return TestClient(test_app)
 
@@ -205,6 +215,25 @@ class TestPresignedUpload:
         )
 
         assert response.status_code == 422
+
+    def test_returns_404_for_missing_project(
+        self, client, mock_project_service, mock_s3
+    ):
+        project_id = uuid4()
+        mock_project_service.get_project.side_effect = NotFoundError(
+            "Project", project_id
+        )
+
+        response = client.post(
+            f"/api/projects/{project_id}/assets/presigned-upload",
+            json={
+                "filename": "clip.mp4",
+                "content_type": "video/mp4",
+                "asset_type": "gameplay",
+            },
+        )
+
+        assert response.status_code == 404
 
 
 class TestDownloadUrl:

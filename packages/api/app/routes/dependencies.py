@@ -2,7 +2,7 @@
 
 from collections.abc import AsyncGenerator, Callable, Generator
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.agents.concept_agent import ConceptAgent
@@ -53,7 +53,12 @@ def get_job_service(
 
 
 def get_s3_client() -> S3Client:
-    return _get_s3_client()
+    try:
+        return _get_s3_client()
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=503, detail="S3 storage is not configured"
+        ) from exc
 
 
 def get_task_dispatcher() -> Callable[[str], object]:

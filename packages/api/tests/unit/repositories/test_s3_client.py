@@ -66,6 +66,24 @@ class TestInit:
 
             mock_client.create_bucket.assert_called_once_with(Bucket="new-bucket")
 
+    def test_raises_on_non_404_error(self):
+        with patch("app.repositories.s3_client.boto3") as mock_boto3:
+            mock_client = MagicMock()
+            mock_boto3.client.return_value = mock_client
+            error = ClientError(
+                {"Error": {"Code": "403", "Message": "Forbidden"}},
+                "HeadBucket",
+            )
+            mock_client.head_bucket.side_effect = error
+
+            with pytest.raises(StorageError):
+                S3Client(
+                    endpoint_url="http://localhost:9000",
+                    access_key="key",
+                    secret_key="secret",
+                    bucket="forbidden-bucket",
+                )
+
     def test_skips_create_when_bucket_exists(self):
         with patch("app.repositories.s3_client.boto3") as mock_boto3:
             mock_client = MagicMock()
@@ -188,6 +206,14 @@ class TestHeadObject:
         result = s3.head_object("uploads/missing.mp4")
 
         assert result is None
+
+    def test_raises_on_non_404_error(self, s3, mock_boto_client):
+        mock_boto_client.head_object.side_effect = ClientError(
+            {"Error": {"Code": "403", "Message": "Forbidden"}}, "HeadObject"
+        )
+
+        with pytest.raises(StorageError):
+            s3.head_object("uploads/file.mp4")
 
 
 class TestGetS3ClientFactory:
