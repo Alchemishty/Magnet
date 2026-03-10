@@ -118,6 +118,8 @@ def presigned_upload(
         project_service.get_project(project_id)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=e.message)
+    except DatabaseError as e:
+        raise HTTPException(status_code=500, detail=e.message)
     s3_key = f"uploads/{project_id}/{uuid4()}_{body.filename}"
     upload_url = s3.generate_presigned_upload_url(s3_key, body.content_type)
     return PresignedUploadResponse(upload_url=upload_url, s3_key=s3_key)
@@ -134,5 +136,7 @@ def download_url(
         asset = service.get_asset(asset_id)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=e.message)
+    except DatabaseError as e:
+        raise HTTPException(status_code=500, detail=e.message)
     url = s3.generate_presigned_download_url(asset.s3_key)
     return {"download_url": url}
