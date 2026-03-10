@@ -18,7 +18,12 @@ from app.schemas.scene_plan import (
 )
 
 
-def _make_agent(tts_bytes=b"audio", music_bytes=b"music", image_bytes=b"image"):
+def _make_agent(
+    tts_bytes=b"audio",
+    music_bytes=b"music",
+    image_bytes=b"image",
+    s3_client=None,
+):
     tts = MagicMock()
     tts.synthesize = AsyncMock(return_value=tts_bytes)
     music = MagicMock()
@@ -32,7 +37,55 @@ def _make_agent(tts_bytes=b"audio", music_bytes=b"music", image_bytes=b"image"):
         music_provider=music,
         image_provider=image,
         asset_repo=asset_repo,
+        s3_client=s3_client,
     )
+
+
+class TestPrepareCompose:
+    @pytest.mark.asyncio
+    async def test_downloads_asset_from_s3(self):
+        mock_s3 = MagicMock()
+        mock_s3.download_file.return_value = "/tmp/scene_0_compose.mp4"
+        agent = _make_agent(s3_client=mock_s3)
+        asset = MagicMock(s3_key="uploads/proj/clip.mp4")
+        agent._asset_repo.list_by_project.return_value = [asset]
+
+        plan = ExecutionPlan(
+            brief_id=uuid4(),
+            project_id=uuid4(),
+            scenes=[PreparedScene(index=0, strategy="COMPOSE")],
+            work_dir=tempfile.mkdtemp(),
+        )
+        scene_plan = ScenePlan(scenes=[
+            Scene(strategy="COMPOSE", type="real_gameplay",
+                  duration=5.0, asset_query="gameplay"),
+        ])
+
+        result = await agent.prepare(plan, scene_plan)
+
+        assert result.scenes[0].status == "ready"
+        mock_s3.download_file.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_falls_back_to_placeholder_without_s3(self):
+        agent = _make_agent(s3_client=None)
+        asset = MagicMock(s3_key="uploads/proj/clip.mp4")
+        agent._asset_repo.list_by_project.return_value = [asset]
+
+        plan = ExecutionPlan(
+            brief_id=uuid4(),
+            project_id=uuid4(),
+            scenes=[PreparedScene(index=0, strategy="COMPOSE")],
+            work_dir=tempfile.mkdtemp(),
+        )
+        scene_plan = ScenePlan(scenes=[
+            Scene(strategy="COMPOSE", type="real_gameplay",
+                  duration=5.0, asset_query="gameplay"),
+        ])
+
+        result = await agent.prepare(plan, scene_plan)
+
+        assert result.scenes[0].status == "ready"
 
 
 class TestPrepareGenerate:

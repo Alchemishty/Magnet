@@ -68,6 +68,7 @@ def _run_video_agent(brief, job_id: str):
     from app.providers.image import get_image_provider
     from app.providers.music import get_music_provider
     from app.providers.tts import get_tts_provider
+    from app.repositories.s3_client import get_s3_client
     from app.schemas.brief import BriefRead
 
     brief_read = BriefRead.model_validate(brief)
@@ -75,6 +76,12 @@ def _run_video_agent(brief, job_id: str):
     tts = get_tts_provider()
     music = get_music_provider()
     image = get_image_provider()
+
+    try:
+        s3 = get_s3_client()
+    except ValueError:
+        logger.warning("S3 not configured, Video Agent will skip uploads")
+        s3 = None
 
     asset_session = SessionLocal()
     try:
@@ -86,6 +93,7 @@ def _run_video_agent(brief, job_id: str):
             music_provider=music,
             image_provider=image,
             asset_repo=asset_repo,
+            s3_client=s3,
         )
 
         work_dir = tempfile.mkdtemp(prefix=f"magnet_render_{job_id}_")

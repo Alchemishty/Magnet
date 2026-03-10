@@ -1,13 +1,26 @@
 """FastAPI routes for Asset operations."""
 
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from app.errors import DatabaseError, NotFoundError
-from app.routes.dependencies import get_asset_service
-from app.schemas.asset import AssetCreate, AssetCreateBody, AssetRead, AssetType
+from app.repositories.s3_client import S3Client
+from app.routes.dependencies import (
+    get_asset_service,
+    get_project_service,
+    get_s3_client,
+)
+from app.schemas.asset import (
+    AssetCreate,
+    AssetCreateBody,
+    AssetRead,
+    AssetType,
+    PresignedUploadRequest,
+    PresignedUploadResponse,
+)
 from app.services.asset_service import AssetService
+from app.services.project_service import ProjectService
 
 router = APIRouter(tags=["assets"])
 
@@ -88,3 +101,42 @@ def delete_asset(
     except DatabaseError as e:
         raise HTTPException(status_code=500, detail=e.message)
     return Response(status_code=204)
+
+
+@router.post(
+    "/api/projects/{project_id}/assets/presigned-upload",
+    response_model=PresignedUploadResponse,
+)
+def presigned_upload(
+    project_id: UUID,
+    body: PresignedUploadRequest,
+    project_service: ProjectService = Depends(get_project_service),
+    s3: S3Client = Depends(get_s3_client),
+) -> PresignedUploadResponse:
+    """Generate a presigned URL for direct-to-S3 asset upload."""
+    try:
+        project_service.get_project(project_id)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.message)
+    except DatabaseError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+    s3_key = f"uploads/{project_id}/{uuid4()}_{body.filename}"
+    upload_url = s3.generate_presigned_upload_url(s3_key, body.content_type)
+    return PresignedUploadResponse(upload_url=upload_url, s3_key=s3_key)
+
+
+@router.get("/api/assets/{asset_id}/download-url")
+def download_url(
+    asset_id: UUID,
+    service: AssetService = Depends(get_asset_service),
+    s3: S3Client = Depends(get_s3_client),
+) -> dict:
+    """Generate a presigned download URL for an asset."""
+    try:
+        asset = service.get_asset(asset_id)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=e.message)
+    except DatabaseError as e:
+        raise HTTPException(status_code=500, detail=e.message)
+    url = s3.generate_presigned_download_url(asset.s3_key)
+    return {"download_url": url}

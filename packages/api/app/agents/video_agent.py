@@ -3,13 +3,13 @@
 import logging
 import os
 
-import boto3
 from pydantic import ValidationError
 
 from app.providers.base import ImageProvider, MusicProvider, TTSProvider
 from app.rendering.assembler import assemble as assembler_assemble
 from app.rendering.templates import get_template
 from app.repositories.asset_repository import AssetRepository
+from app.repositories.s3_client import S3Client
 from app.schemas.brief import BriefRead
 from app.schemas.composition import Composition, CompositionLayer
 from app.schemas.execution_plan import ExecutionPlan, PreparedAudio, PreparedScene
@@ -35,11 +35,13 @@ class VideoAgent:
         music_provider: MusicProvider,
         image_provider: ImageProvider,
         asset_repo: AssetRepository,
+        s3_client: S3Client | None = None,
     ):
         self._tts = tts_provider
         self._music = music_provider
         self._image = image_provider
         self._asset_repo = asset_repo
+        self._s3 = s3_client
 
     def plan(self, brief: BriefRead, work_dir: str) -> ExecutionPlan:
         """PLAN phase: parse scene_plan into an ExecutionPlan."""
@@ -134,10 +136,12 @@ class VideoAgent:
             raise VideoAgentError("No asset available for COMPOSE scene")
 
         output_path = os.path.join(work_dir, f"scene_{index}_compose.mp4")
-        # For MVP: the asset s3_key serves as a placeholder path.
-        # Full S3 download will be added in POST-PROCESS integration.
-        with open(output_path, "wb") as f:
-            f.write(b"compose_placeholder")
+        if self._s3:
+            self._s3.download_file(asset.s3_key, output_path)
+        else:
+            logger.warning("No S3 client, writing placeholder for COMPOSE")
+            with open(output_path, "wb") as f:
+                f.write(b"compose_placeholder")
         return output_path
 
     async def _prepare_generate(self, scene, work_dir: str, index: int) -> str:
@@ -261,20 +265,13 @@ class VideoAgent:
 
     async def post_process(self, output_path: str, job_id: str) -> str:
         """POST-PROCESS phase: upload to S3 and return the key."""
-        bucket = os.environ.get("S3_BUCKET")
-        if not bucket:
-            logger.warning("S3_BUCKET not configured, skipping upload")
+        if not self._s3:
+            logger.warning("No S3 client configured, skipping upload")
             return output_path
 
         s3_key = f"renders/{job_id}/output.mp4"
-        client = boto3.client(
-            "s3",
-            endpoint_url=os.environ.get("S3_ENDPOINT"),
-            aws_access_key_id=os.environ.get("S3_ACCESS_KEY"),
-            aws_secret_access_key=os.environ.get("S3_SECRET_KEY"),
-        )
-        client.upload_file(output_path, bucket, s3_key)
-        logger.info("Uploaded render to s3://%s/%s", bucket, s3_key)
+        self._s3.upload_file(output_path, s3_key)
+        logger.info("Uploaded render to s3://%s", s3_key)
         return s3_key
 
     async def produce(
