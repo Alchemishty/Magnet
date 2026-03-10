@@ -87,21 +87,17 @@ class TestGetRedisClient:
     @patch.dict(
         "os.environ",
         {"CELERY_BROKER_URL": "redis://celery:6379/0"},
-        clear=False,
+        clear=True,
     )
     @patch("app.repositories.redis_client.redis.Redis.from_url")
     def test_falls_back_to_celery_broker_url(self, mock_from_url):
-        import os
-        os.environ.pop("REDIS_URL", None)
         mock_from_url.return_value = MagicMock()
         client = get_redis_client()
         assert client._url == "redis://celery:6379/0"
 
+    @patch.dict("os.environ", {}, clear=True)
     @patch("app.repositories.redis_client.redis.Redis.from_url")
     def test_falls_back_to_default(self, mock_from_url):
-        import os
-        os.environ.pop("REDIS_URL", None)
-        os.environ.pop("CELERY_BROKER_URL", None)
         mock_from_url.return_value = MagicMock()
         client = get_redis_client()
         assert client._url == "redis://localhost:6379/0"

@@ -1,7 +1,7 @@
 # WebSocket Real-Time Progress Implementation Plan
 
 **Goal:** Add WebSocket-based real-time progress updates so the frontend receives live status changes during render job processing, replacing the need for polling.
-**Architecture:** Redis pub/sub bridges Celery workers and FastAPI WebSocket connections. Workers publish progress events to `progress:{job_id}` channels; the WebSocket endpoint subscribes and forwards to connected clients. Progress events are ephemeral (pub/sub) while job status remains the DB source of truth. No new infrastructure — Redis is already deployed for Celery.
+**Architecture:** Redis pub/sub bridges Celery workers and FastAPI WebSocket connections. Workers publish progress events to `progress:brief:{brief_id}` channels; the WebSocket endpoint at `/ws/briefs/{brief_id}/progress` subscribes per-brief and forwards to connected clients. Progress events are ephemeral (pub/sub) while job status remains the DB source of truth. No new infrastructure — Redis is already deployed for Celery.
 
 ## Assumptions
 - Redis is available at the URL configured in `CELERY_BROKER_URL` (already required for Celery)
@@ -78,7 +78,7 @@
 
 ### Step 6: [DONE] Frontend WebSocket hook
 **Files:** `packages/web/lib/useBriefProgress.ts`, `packages/web/lib/types/progress.ts`
-**Tests:** `packages/web/__tests__/useBriefProgress.test.ts`
+**Tests:** `packages/web/__tests__/unit/useBriefProgress.test.ts`
 **What to do:** Create a TypeScript type and React hook:
 - `packages/web/lib/types/progress.ts` — `ProgressEvent` type matching the API schema: `{ job_id, brief_id, status, phase, progress_pct, message, timestamp }`.
 - `useBriefProgress(briefId: string | null)` hook that:
@@ -88,7 +88,7 @@
   - Closes the connection on unmount or when `briefId` changes.
   - Handles reconnection with exponential backoff (max 3 retries, 1s/2s/4s delays).
   - Uses `NEXT_PUBLIC_API_WS_URL` env var for the WebSocket base URL.
-**Verify:** `cd packages/web && npx vitest run __tests__/useBriefProgress.test.ts`
+**Verify:** `cd packages/web && npx vitest run __tests__/unit/useBriefProgress.test.ts`
 
 ## Validation
 - All unit tests pass: `cd packages/api && pytest -x` and `cd packages/web && npx vitest run`

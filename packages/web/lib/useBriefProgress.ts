@@ -20,9 +20,11 @@ export function useBriefProgress(
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const retriesRef = useRef(0);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const connect = useCallback(() => {
     if (!briefId) return;
+    retryTimeoutRef.current = null;
 
     const url = `${WS_BASE_URL}/ws/briefs/${briefId}/progress`;
     const ws = new WebSocket(url);
@@ -52,7 +54,7 @@ export function useBriefProgress(
       if (retriesRef.current < MAX_RETRIES) {
         const delay = BACKOFF_MS[retriesRef.current] ?? BACKOFF_MS[BACKOFF_MS.length - 1];
         retriesRef.current += 1;
-        setTimeout(connect, delay);
+        retryTimeoutRef.current = setTimeout(connect, delay);
       }
     };
 
@@ -71,6 +73,10 @@ export function useBriefProgress(
     connect();
 
     return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
