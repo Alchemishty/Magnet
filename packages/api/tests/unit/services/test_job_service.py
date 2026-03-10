@@ -64,6 +64,58 @@ class TestCreateJob:
         assert exc_info.value.entity_name == "CreativeBrief"
         assert exc_info.value.entity_id == brief_id
 
+    @patch("app.services.job_service.BriefRepository")
+    @patch("app.services.job_service.RenderJobRepository")
+    def test_calls_dispatch_task_with_job_id(
+        self, mock_job_repo, mock_brief_repo, session
+    ):
+        brief_id = uuid4()
+        mock_brief_repo.return_value.get_by_id.return_value = MagicMock()
+        expected_job = MagicMock(spec=RenderJob)
+        expected_job.id = uuid4()
+        mock_job_repo.return_value.create_from_schema.return_value = expected_job
+        dispatcher = MagicMock()
+
+        data = JobCreate(brief_id=brief_id)
+        svc = JobService(session)
+        svc.create_job(data, dispatch_task=dispatcher)
+
+        dispatcher.assert_called_once_with(str(expected_job.id))
+
+    @patch("app.services.job_service.BriefRepository")
+    @patch("app.services.job_service.RenderJobRepository")
+    def test_no_dispatch_when_none(
+        self, mock_job_repo, mock_brief_repo, session
+    ):
+        brief_id = uuid4()
+        mock_brief_repo.return_value.get_by_id.return_value = MagicMock()
+        expected_job = MagicMock(spec=RenderJob)
+        mock_job_repo.return_value.create_from_schema.return_value = expected_job
+
+        data = JobCreate(brief_id=brief_id)
+        svc = JobService(session)
+        result = svc.create_job(data)
+
+        assert result is expected_job
+
+    @patch("app.services.job_service.BriefRepository")
+    @patch("app.services.job_service.RenderJobRepository")
+    def test_job_created_even_if_dispatch_fails(
+        self, mock_job_repo, mock_brief_repo, session
+    ):
+        brief_id = uuid4()
+        mock_brief_repo.return_value.get_by_id.return_value = MagicMock()
+        expected_job = MagicMock(spec=RenderJob)
+        expected_job.id = uuid4()
+        mock_job_repo.return_value.create_from_schema.return_value = expected_job
+        dispatcher = MagicMock(side_effect=RuntimeError("queue down"))
+
+        data = JobCreate(brief_id=brief_id)
+        svc = JobService(session)
+        result = svc.create_job(data, dispatch_task=dispatcher)
+
+        assert result is expected_job
+
 
 # ── list_jobs ────────────────────────────────────────────────────────
 
