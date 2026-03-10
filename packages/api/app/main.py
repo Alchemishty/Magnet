@@ -10,6 +10,7 @@ from app.routes import (
     briefs_router,
     jobs_router,
     projects_router,
+    ws_router,
 )
 
 logger = logging.getLogger(__name__)
@@ -20,6 +21,7 @@ app.include_router(projects_router)
 app.include_router(briefs_router)
 app.include_router(assets_router)
 app.include_router(jobs_router)
+app.include_router(ws_router)
 
 
 def _check_db() -> str:
