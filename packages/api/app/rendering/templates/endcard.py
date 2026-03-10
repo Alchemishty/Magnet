@@ -27,7 +27,7 @@ class EndcardRenderer:
         width, height = resolution
         cta_font = _load_font(font_path, 64)
         name_font = _load_font(font_path, 48)
-        total_frames = int(duration * fps)
+        total_frames = max(1, int(duration * fps))
 
         base = Image.new("RGB", (width, height), bg_color)
         draw = ImageDraw.Draw(base)

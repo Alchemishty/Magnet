@@ -75,6 +75,7 @@ class VideoAgent:
 
         return ExecutionPlan(
             brief_id=brief.id,
+            project_id=brief.project_id,
             scenes=scenes,
             audio=audio,
             work_dir=work_dir,
@@ -90,7 +91,8 @@ class VideoAgent:
             try:
                 if scene.strategy == "COMPOSE":
                     output = await self._prepare_compose(
-                        scene, exec_plan.work_dir, prepared.index
+                        scene, exec_plan.work_dir,
+                        prepared.index, exec_plan.project_id,
                     )
                 elif scene.strategy == "GENERATE":
                     output = await self._prepare_generate(
@@ -122,9 +124,11 @@ class VideoAgent:
             update={"scenes": updated_scenes, "audio": updated_audio}
         )
 
-    async def _prepare_compose(self, scene, work_dir: str, index: int) -> str:
+    async def _prepare_compose(
+        self, scene, work_dir: str, index: int, project_id
+    ) -> str:
         """Download and trim a COMPOSE asset."""
-        assets = self._asset_repo.list_by_project()
+        assets = self._asset_repo.list_by_project(project_id)
         asset = assets[0] if assets else None
         if not asset:
             raise VideoAgentError("No asset available for COMPOSE scene")

@@ -93,6 +93,30 @@ def assemble(
             )
             current_video = out_label
 
+    for i, layer in enumerate(image_layers):
+        path = asset_map[layer.asset_id]
+        in_idx = input_indices[path]
+        dur = layer.end - layer.start
+        img_label = f"[img{i}]"
+        filter_parts.append(
+            f"[{in_idx}:v]loop=loop=-1:size=1:start=0,"
+            f"setpts=PTS-STARTPTS,"
+            f"trim=duration={dur},"
+            f"scale={width}:{height}:"
+            f"force_original_aspect_ratio=decrease,"
+            f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2"
+            f"{img_label}"
+        )
+        if current_video is None:
+            current_video = img_label
+        else:
+            out_label = f"[imgcat{i}]"
+            filter_parts.append(
+                f"{current_video}{img_label}"
+                f"concat=n=2:v=1:a=0{out_label}"
+            )
+            current_video = out_label
+
     for i, layer in enumerate(text_layers):
         text = layer.content or ""
         escaped = text.replace("'", "'\\''").replace(":", "\\:")

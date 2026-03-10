@@ -41,6 +41,7 @@ class TestPrepareGenerate:
         agent = _make_agent(image_bytes=b"\x89PNG_fake")
         plan = ExecutionPlan(
             brief_id=uuid4(),
+            project_id=uuid4(),
             scenes=[PreparedScene(index=0, strategy="GENERATE")],
             work_dir=tempfile.mkdtemp(),
         )
@@ -62,6 +63,7 @@ class TestPrepareGenerate:
         work_dir = tempfile.mkdtemp()
         plan = ExecutionPlan(
             brief_id=uuid4(),
+            project_id=uuid4(),
             scenes=[PreparedScene(index=0, strategy="GENERATE")],
             work_dir=work_dir,
         )
@@ -87,6 +89,7 @@ class TestPrepareRender:
         agent = _make_agent()
         plan = ExecutionPlan(
             brief_id=uuid4(),
+            project_id=uuid4(),
             scenes=[PreparedScene(index=0, strategy="RENDER")],
             work_dir=tempfile.mkdtemp(),
         )
@@ -108,6 +111,7 @@ class TestPrepareAudio:
         agent = _make_agent(tts_bytes=b"tts_audio")
         plan = ExecutionPlan(
             brief_id=uuid4(),
+            project_id=uuid4(),
             scenes=[PreparedScene(index=0, strategy="RENDER")],
             audio=[PreparedAudio(type="voiceover")],
             work_dir=tempfile.mkdtemp(),
@@ -117,7 +121,7 @@ class TestPrepareAudio:
                           template="text_hook", params={"text": "Hi"})],
             audio=AudioPlan(
                 voiceover=VoiceoverPlan(
-                    strategy="GENERATE", generator="elevenlabs",
+                    generator="elevenlabs",
                     script="Download now!", voice="v1",
                 ),
             ),
@@ -134,6 +138,7 @@ class TestPrepareAudio:
         agent = _make_agent(music_bytes=b"music_data")
         plan = ExecutionPlan(
             brief_id=uuid4(),
+            project_id=uuid4(),
             scenes=[PreparedScene(index=0, strategy="RENDER")],
             audio=[PreparedAudio(type="music")],
             work_dir=tempfile.mkdtemp(),
@@ -143,7 +148,7 @@ class TestPrepareAudio:
                           template="text_hook", params={"text": "Hi"})],
             audio=AudioPlan(
                 music=MusicPlan(
-                    strategy="GENERATE", generator="suno",
+                    generator="suno",
                     prompt="upbeat game music",
                 ),
             ),
@@ -166,6 +171,7 @@ class TestPreparePartialFailure:
         agent = _make_agent()
         plan = ExecutionPlan(
             brief_id=uuid4(),
+            project_id=uuid4(),
             scenes=[
                 PreparedScene(index=0, strategy="RENDER"),
                 PreparedScene(index=1, strategy="RENDER"),
@@ -195,6 +201,7 @@ class TestPreparePartialFailure:
         agent = _make_agent()
         plan = ExecutionPlan(
             brief_id=uuid4(),
+            project_id=uuid4(),
             scenes=[PreparedScene(index=0, strategy="RENDER")],
             work_dir=tempfile.mkdtemp(),
         )

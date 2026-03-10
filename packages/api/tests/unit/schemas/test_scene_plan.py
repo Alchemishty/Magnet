@@ -70,7 +70,6 @@ class TestAudioPlan:
     def test_voiceover_only(self):
         audio = AudioPlan(
             voiceover=VoiceoverPlan(
-                strategy="GENERATE",
                 generator="elevenlabs",
                 script="Download now!",
             )
@@ -82,7 +81,6 @@ class TestAudioPlan:
     def test_voiceover_with_custom_voice(self):
         audio = AudioPlan(
             voiceover=VoiceoverPlan(
-                strategy="GENERATE",
                 generator="elevenlabs",
                 script="Try it now!",
                 voice="custom-voice-id-123",
@@ -93,7 +91,6 @@ class TestAudioPlan:
     def test_music_only(self):
         audio = AudioPlan(
             music=MusicPlan(
-                strategy="GENERATE",
                 generator="suno",
                 prompt="upbeat casual game background music",
             )
@@ -104,10 +101,10 @@ class TestAudioPlan:
     def test_both_voiceover_and_music(self):
         audio = AudioPlan(
             voiceover=VoiceoverPlan(
-                strategy="GENERATE", generator="elevenlabs", script="Play now!"
+                generator="elevenlabs", script="Play now!"
             ),
             music=MusicPlan(
-                strategy="GENERATE", generator="suno", prompt="upbeat music"
+                generator="suno", prompt="upbeat music"
             ),
         )
         assert audio.voiceover is not None
@@ -130,7 +127,7 @@ class TestScenePlan:
             scenes=[Scene(strategy="COMPOSE", type="endcard", duration=2.0)],
             audio=AudioPlan(
                 voiceover=VoiceoverPlan(
-                    strategy="GENERATE", generator="elevenlabs", script="Go!"
+                    generator="elevenlabs", script="Go!"
                 )
             ),
         )

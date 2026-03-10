@@ -61,8 +61,10 @@ class TestPreparedAudio:
 class TestExecutionPlan:
     def test_minimal_plan(self):
         brief_id = uuid4()
+        project_id = uuid4()
         plan = ExecutionPlan(
             brief_id=brief_id,
+            project_id=project_id,
             scenes=[PreparedScene(index=0, strategy="COMPOSE")],
             work_dir="/tmp/work",
         )
@@ -74,6 +76,7 @@ class TestExecutionPlan:
     def test_plan_with_audio(self):
         plan = ExecutionPlan(
             brief_id=uuid4(),
+            project_id=uuid4(),
             scenes=[PreparedScene(index=0, strategy="GENERATE")],
             audio=[
                 PreparedAudio(type="voiceover"),
@@ -87,6 +90,7 @@ class TestExecutionPlan:
         with pytest.raises(ValidationError):
             ExecutionPlan(
                 brief_id=uuid4(),
+                project_id=uuid4(),
                 scenes=[],
                 work_dir="/tmp/work",
             )

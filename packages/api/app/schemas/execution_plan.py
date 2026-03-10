@@ -28,6 +28,7 @@ class PreparedAudio(BaseModel):
 
 class ExecutionPlan(BaseModel):
     brief_id: UUID
+    project_id: UUID
     scenes: list[PreparedScene]
     audio: list[PreparedAudio] = []
     work_dir: str

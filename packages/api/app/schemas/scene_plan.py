@@ -27,14 +27,12 @@ class Scene(BaseModel):
 
 
 class VoiceoverPlan(BaseModel):
-    strategy: SceneStrategy
     generator: str
     script: str
     voice: str | None = None
 
 
 class MusicPlan(BaseModel):
-    strategy: SceneStrategy
     generator: str
     prompt: str
 

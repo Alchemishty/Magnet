@@ -27,7 +27,7 @@ class TextHookRenderer:
 
         width, height = resolution
         font = _load_font(font_path, font_size)
-        total_frames = int(duration * fps)
+        total_frames = max(1, int(duration * fps))
         frames: list[Image.Image] = []
 
         for i in range(total_frames):

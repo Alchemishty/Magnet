@@ -26,6 +26,7 @@ class TestAssemblePhase:
         agent = _make_agent()
         plan = ExecutionPlan(
             brief_id=uuid4(),
+            project_id=uuid4(),
             scenes=[
                 PreparedScene(index=0, strategy="GENERATE", status="ready",
                               output_path="/tmp/scene_0.mp4"),
@@ -55,6 +56,7 @@ class TestAssemblePhase:
         agent = _make_agent()
         plan = ExecutionPlan(
             brief_id=uuid4(),
+            project_id=uuid4(),
             scenes=[
                 PreparedScene(index=0, strategy="GENERATE", status="failed",
                               error_message="broke"),
@@ -79,6 +81,7 @@ class TestAssemblePhase:
         agent = _make_agent()
         plan = ExecutionPlan(
             brief_id=uuid4(),
+            project_id=uuid4(),
             scenes=[
                 PreparedScene(index=0, strategy="RENDER", status="ready",
                               output_path="/tmp/scene_0.mp4"),
@@ -111,6 +114,7 @@ class TestBuildAndRender:
         agent = _make_agent()
         plan = ExecutionPlan(
             brief_id=uuid4(),
+            project_id=uuid4(),
             scenes=[
                 PreparedScene(index=0, strategy="RENDER", status="ready",
                               output_path="/tmp/scene_0.mp4"),
