@@ -22,6 +22,7 @@ class TestRenderJob:
         assert "output_s3_key" in columns
         assert "render_duration_ms" in columns
         assert "error_message" in columns
+        assert "celery_task_id" in columns
 
     def test_status_defaults_to_queued(self):
         job = RenderJob(brief_id=uuid4())
@@ -52,6 +53,11 @@ class TestRenderJob:
 
         assert job.composition["duration"] == 15
         assert len(job.composition["layers"]) == 2
+
+    def test_celery_task_id_defaults_to_none(self):
+        job = RenderJob(brief_id=uuid4())
+
+        assert job.celery_task_id is None
 
     def test_has_brief_relationship(self):
         assert hasattr(RenderJob, "brief")

@@ -22,6 +22,7 @@ def _make_job(**overrides):
         "output_s3_key": None,
         "render_duration_ms": None,
         "error_message": None,
+        "celery_task_id": None,
         "created_at": datetime.now(timezone.utc),
         "updated_at": None,
     }

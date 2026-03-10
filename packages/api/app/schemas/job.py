@@ -28,6 +28,7 @@ class JobRead(BaseModel):
     output_s3_key: str | None
     render_duration_ms: int | None
     error_message: str | None
+    celery_task_id: str | None
     created_at: datetime
     updated_at: datetime | None
 
@@ -38,3 +39,4 @@ class JobUpdate(BaseModel):
     output_s3_key: str | None = None
     render_duration_ms: int | None = None
     error_message: str | None = None
+    celery_task_id: str | None = None

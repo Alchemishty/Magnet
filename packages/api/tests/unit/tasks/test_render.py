@@ -29,6 +29,8 @@ class TestProcessRenderJob:
         update_calls = mock_repo.update.call_args_list
         statuses = [call[0][1]["status"] for call in update_calls]
         assert statuses == ["rendering", "done"]
+        rendering_data = update_calls[0][0][1]
+        assert "celery_task_id" in rendering_data
 
     @patch("app.tasks.render.SessionLocal")
     @patch("app.tasks.render.RenderJobRepository")
