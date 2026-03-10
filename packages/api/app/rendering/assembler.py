@@ -118,6 +118,8 @@ def assemble(
             current_video = out_label
 
     for i, layer in enumerate(text_layers):
+        if current_video is None:
+            continue
         text = layer.content or ""
         escaped = text.replace("'", "'\\''").replace(":", "\\:")
         x, y = _resolve_text_position(layer.position, width, height)
