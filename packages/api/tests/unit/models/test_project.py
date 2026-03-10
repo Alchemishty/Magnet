@@ -27,9 +27,7 @@ class TestProject:
     def test_status_defaults_to_active(self):
         from uuid import uuid4
 
-        project = Project(
-            user_id=uuid4(), name="Test Game"
-        )
+        project = Project(user_id=uuid4(), name="Test Game")
 
         assert project.status == "active"
 

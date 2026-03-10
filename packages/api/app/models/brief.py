@@ -26,29 +26,15 @@ class CreativeBrief(BaseModel):
     voiceover_text: Mapped[str | None] = mapped_column(Text)
     target_emotion: Mapped[str | None] = mapped_column(String(100))
     cta_text: Mapped[str | None] = mapped_column(String(255))
-    reference_ads: Mapped[list] = mapped_column(
-        JSONB, server_default="[]"
-    )
-    target_format: Mapped[str] = mapped_column(
-        String(20), server_default="9:16"
-    )
-    target_duration: Mapped[int] = mapped_column(
-        Integer, server_default="15"
-    )
-    status: Mapped[str] = mapped_column(
-        String(50), server_default="draft"
-    )
-    generated_by: Mapped[str] = mapped_column(
-        String(50), server_default="agent"
-    )
+    reference_ads: Mapped[list] = mapped_column(JSONB, server_default="[]")
+    target_format: Mapped[str] = mapped_column(String(20), server_default="9:16")
+    target_duration: Mapped[int] = mapped_column(Integer, server_default="15")
+    status: Mapped[str] = mapped_column(String(50), server_default="draft")
+    generated_by: Mapped[str] = mapped_column(String(50), server_default="agent")
     scene_plan: Mapped[dict | None] = mapped_column(JSONB)
 
-    project: Mapped[Project] = relationship(
-        back_populates="briefs"
-    )
-    render_jobs: Mapped[list[RenderJob]] = relationship(
-        back_populates="brief"
-    )
+    project: Mapped[Project] = relationship(back_populates="briefs")
+    render_jobs: Mapped[list[RenderJob]] = relationship(back_populates="brief")
 
     def __init__(self, **kwargs):
         kwargs.setdefault("status", "draft")

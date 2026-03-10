@@ -41,9 +41,7 @@ class TestProjectRead:
             updated_at=None,
         )
 
-        schema = ProjectRead.model_validate(
-            obj, from_attributes=True
-        )
+        schema = ProjectRead.model_validate(obj, from_attributes=True)
 
         assert schema.name == "Game"
         assert schema.status == "active"
@@ -97,9 +95,7 @@ class TestGameProfileRead:
             updated_at=None,
         )
 
-        schema = GameProfileRead.model_validate(
-            obj, from_attributes=True
-        )
+        schema = GameProfileRead.model_validate(obj, from_attributes=True)
 
         assert schema.genre == "rpg"
         assert schema.core_mechanics == ["combat"]

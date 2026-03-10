@@ -72,9 +72,7 @@ class TestMockLLMProviderError:
         mock = MockLLMProviderError(error=error)
 
         with pytest.raises(RuntimeError, match="LLM failed"):
-            await mock.generate(
-                [{"role": "user", "content": "hi"}]
-            )
+            await mock.generate([{"role": "user", "content": "hi"}])
 
     async def test_raises_on_every_call(self):
         error = ValueError("bad input")

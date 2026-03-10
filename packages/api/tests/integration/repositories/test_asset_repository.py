@@ -106,9 +106,7 @@ class TestAssetRepositoryIntegration:
             )
         )
 
-        updated = repo.update_from_schema(
-            asset.id, AssetUpdate(size_bytes=2048)
-        )
+        updated = repo.update_from_schema(asset.id, AssetUpdate(size_bytes=2048))
 
         assert updated is not None
         assert updated.size_bytes == 2048

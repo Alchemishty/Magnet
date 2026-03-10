@@ -68,19 +68,30 @@ def generate_briefs_fn(brief_schemas):
 class TestGenerateConceptsHappyPath:
     @pytest.mark.asyncio
     async def test_returns_persisted_briefs(
-        self, service, mock_session, project_id, game_profile,
-        brief_schemas, generate_briefs_fn,
+        self,
+        service,
+        mock_session,
+        project_id,
+        game_profile,
+        brief_schemas,
+        generate_briefs_fn,
     ):
         """Happy path: fetches profile, calls generator, persists results."""
-        with patch.object(
-            service._profile_repo, "get_by_project_id",
-            return_value=game_profile,
-        ), patch.object(
-            service._brief_repo, "create_from_schema",
-            side_effect=lambda s: CreativeBrief(**s.model_dump()),
+        with (
+            patch.object(
+                service._profile_repo,
+                "get_by_project_id",
+                return_value=game_profile,
+            ),
+            patch.object(
+                service._brief_repo,
+                "create_from_schema",
+                side_effect=lambda s: CreativeBrief(**s.model_dump()),
+            ),
         ):
             result = await service.generate_concepts(
-                project_id, generate_briefs_fn,
+                project_id,
+                generate_briefs_fn,
             )
 
         # The generate fn was called with a GameProfileRead schema
@@ -96,19 +107,30 @@ class TestGenerateConceptsHappyPath:
 
     @pytest.mark.asyncio
     async def test_persists_each_brief(
-        self, service, mock_session, project_id, game_profile,
-        brief_schemas, generate_briefs_fn,
+        self,
+        service,
+        mock_session,
+        project_id,
+        game_profile,
+        brief_schemas,
+        generate_briefs_fn,
     ):
         """Each generated BriefCreate is persisted via the repo."""
-        with patch.object(
-            service._profile_repo, "get_by_project_id",
-            return_value=game_profile,
-        ), patch.object(
-            service._brief_repo, "create_from_schema",
-            side_effect=lambda s: CreativeBrief(**s.model_dump()),
-        ) as mock_create:
+        with (
+            patch.object(
+                service._profile_repo,
+                "get_by_project_id",
+                return_value=game_profile,
+            ),
+            patch.object(
+                service._brief_repo,
+                "create_from_schema",
+                side_effect=lambda s: CreativeBrief(**s.model_dump()),
+            ) as mock_create,
+        ):
             await service.generate_concepts(
-                project_id, generate_briefs_fn,
+                project_id,
+                generate_briefs_fn,
             )
 
         assert mock_create.call_count == len(brief_schemas)
@@ -119,16 +141,21 @@ class TestGenerateConceptsHappyPath:
 class TestGenerateConceptsProfileNotFound:
     @pytest.mark.asyncio
     async def test_raises_not_found_when_no_profile(
-        self, service, project_id, generate_briefs_fn,
+        self,
+        service,
+        project_id,
+        generate_briefs_fn,
     ):
         """Raises NotFoundError when GameProfile doesn't exist."""
         with patch.object(
-            service._profile_repo, "get_by_project_id",
+            service._profile_repo,
+            "get_by_project_id",
             return_value=None,
         ):
             with pytest.raises(NotFoundError) as exc_info:
                 await service.generate_concepts(
-                    project_id, generate_briefs_fn,
+                    project_id,
+                    generate_briefs_fn,
                 )
 
         assert exc_info.value.entity_name == "GameProfile"
@@ -139,7 +166,10 @@ class TestGenerateConceptsProfileNotFound:
 class TestGenerateConceptsValidationError:
     @pytest.mark.asyncio
     async def test_raises_validation_when_profile_incomplete(
-        self, service, project_id, generate_briefs_fn,
+        self,
+        service,
+        project_id,
+        generate_briefs_fn,
     ):
         """Raises ValidationError when profile has no genre."""
         incomplete_profile = GameProfile(
@@ -150,12 +180,14 @@ class TestGenerateConceptsValidationError:
             created_at=datetime.now(timezone.utc),
         )
         with patch.object(
-            service._profile_repo, "get_by_project_id",
+            service._profile_repo,
+            "get_by_project_id",
             return_value=incomplete_profile,
         ):
             with pytest.raises(ValidationError) as exc_info:
                 await service.generate_concepts(
-                    project_id, generate_briefs_fn,
+                    project_id,
+                    generate_briefs_fn,
                 )
 
         assert "GameProfile" in exc_info.value.message

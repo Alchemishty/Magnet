@@ -33,9 +33,7 @@ class AssetService:
         limit: int = 100,
     ) -> list[Asset]:
         """List assets for a project with optional filtering."""
-        return self._asset_repo.list_by_project(
-            project_id, asset_type, offset, limit
-        )
+        return self._asset_repo.list_by_project(project_id, asset_type, offset, limit)
 
     def get_asset(self, asset_id: UUID) -> Asset:
         """Get a single asset by ID or raise NotFoundError."""

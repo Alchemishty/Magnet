@@ -52,9 +52,7 @@ def list_jobs(
 ) -> list[JobRead]:
     """List render jobs for a brief."""
     try:
-        jobs = service.list_jobs(
-            brief_id, status=status, offset=offset, limit=limit
-        )
+        jobs = service.list_jobs(brief_id, status=status, offset=offset, limit=limit)
     except DatabaseError as e:
         raise HTTPException(status_code=500, detail=e.message)
     return jobs

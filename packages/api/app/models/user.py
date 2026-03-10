@@ -14,16 +14,12 @@ if TYPE_CHECKING:
 class User(BaseModel):
     __tablename__ = "users"
 
-    email: Mapped[str] = mapped_column(
-        String(255), unique=True, nullable=False
-    )
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     clerk_id: Mapped[str | None] = mapped_column(
         String(255), unique=True, nullable=True
     )
-    role: Mapped[str] = mapped_column(
-        String(50), server_default="creator"
-    )
+    role: Mapped[str] = mapped_column(String(50), server_default="creator")
 
     projects: Mapped[list[Project]] = relationship(
         back_populates="user",

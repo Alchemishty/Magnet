@@ -40,7 +40,7 @@ HOOK_TAXONOMY: list[dict] = [
     },
     {
         "category": "Tutorial bait",
-        "examples": '"Here\'s a trick most players don\'t know"',
+        "examples": "\"Here's a trick most players don't know\"",
         "best_for": "Strategy, mid-core",
     },
 ]

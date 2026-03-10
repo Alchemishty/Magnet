@@ -24,9 +24,7 @@ class AssetRepository(BaseRepository[Asset]):
     ) -> list[Asset]:
         """List assets for a project, optionally filtered by asset_type."""
         try:
-            query = self._session.query(Asset).filter(
-                Asset.project_id == project_id
-            )
+            query = self._session.query(Asset).filter(Asset.project_id == project_id)
             if asset_type is not None:
                 query = query.filter(Asset.asset_type == asset_type)
             return query.offset(offset).limit(limit).all()
@@ -39,8 +37,6 @@ class AssetRepository(BaseRepository[Asset]):
         """Create an asset from an AssetCreate schema."""
         return self.create(schema.model_dump())
 
-    def update_from_schema(
-        self, entity_id: UUID, schema: AssetUpdate
-    ) -> Asset | None:
+    def update_from_schema(self, entity_id: UUID, schema: AssetUpdate) -> Asset | None:
         """Update an asset from an AssetUpdate schema."""
         return self.update(entity_id, schema.model_dump(exclude_unset=True))

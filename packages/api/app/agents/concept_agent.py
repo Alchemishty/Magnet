@@ -29,6 +29,8 @@ def _ensure_dict(response: object, step: str) -> dict:
             f"{step} response is not a dict: {type(response).__name__}"
         )
     return response
+
+
 _EXPAND_REQUIRED_FIELDS = {
     "hook_type",
     "narrative_angle",
@@ -54,31 +56,22 @@ async def strategize(
     )
 
     if "directions" not in response:
-        raise ConceptAgentError(
-            "LLM response missing 'directions' key"
-        )
+        raise ConceptAgentError("LLM response missing 'directions' key")
 
     directions = response["directions"]
     if not isinstance(directions, list):
-        raise ConceptAgentError(
-            "LLM response 'directions' is not a list"
-        )
+        raise ConceptAgentError("LLM response 'directions' is not a list")
 
     for i, d in enumerate(directions):
         if not isinstance(d, dict):
-            raise ConceptAgentError(
-                f"Direction {i} is not a dict"
-            )
+            raise ConceptAgentError(f"Direction {i} is not a dict")
         missing = _DIRECTION_REQUIRED_KEYS - set(d.keys())
         if missing:
-            raise ConceptAgentError(
-                f"Direction {i} missing keys: {missing}"
-            )
+            raise ConceptAgentError(f"Direction {i} missing keys: {missing}")
         for key in _DIRECTION_REQUIRED_KEYS:
             if not isinstance(d[key], str) or not d[key].strip():
                 raise ConceptAgentError(
-                    f"Direction {i} has invalid '{key}': "
-                    f"expected non-empty string"
+                    f"Direction {i} has invalid '{key}': expected non-empty string"
                 )
 
     return directions
@@ -118,42 +111,28 @@ async def expand(
                 voiceover_text=response.get("voiceover_text"),
                 target_emotion=response.get("target_emotion"),
                 cta_text=response.get("cta_text"),
-                target_format=response.get(
-                    "target_format", "9:16"
-                ),
-                target_duration=response.get(
-                    "target_duration", 15
-                ),
+                target_format=response.get("target_format", "9:16"),
+                target_duration=response.get("target_duration", 15),
                 scene_plan=response.get("scene_plan"),
                 status="draft",
                 generated_by="agent",
             )
         except (ValidationError, KeyError, TypeError) as e:
-            raise ConceptAgentError(
-                f"Failed to parse expand response: {e}"
-            ) from e
+            raise ConceptAgentError(f"Failed to parse expand response: {e}") from e
 
         if brief.scene_plan is None or "scenes" not in brief.scene_plan:
-            raise ConceptAgentError(
-                "Expand response missing scene_plan with scenes"
-            )
+            raise ConceptAgentError("Expand response missing scene_plan with scenes")
 
         scenes = brief.scene_plan["scenes"]
         if not isinstance(scenes, list) or len(scenes) == 0:
-            raise ConceptAgentError(
-                "scene_plan must have at least one scene"
-            )
+            raise ConceptAgentError("scene_plan must have at least one scene")
 
         for j, scene in enumerate(scenes):
             if not isinstance(scene, dict):
-                raise ConceptAgentError(
-                    f"Scene {j} is not a dict"
-                )
+                raise ConceptAgentError(f"Scene {j} is not a dict")
             missing = _SCENE_REQUIRED_KEYS - set(scene.keys())
             if missing:
-                raise ConceptAgentError(
-                    f"Scene {j} missing keys: {missing}"
-                )
+                raise ConceptAgentError(f"Scene {j} missing keys: {missing}")
             if scene["strategy"] not in _VALID_SCENE_STRATEGIES:
                 raise ConceptAgentError(
                     f"Scene {j} has invalid strategy "
@@ -186,9 +165,7 @@ async def diversify(
 
     for key in ("keep", "mutate", "drop"):
         if key not in response:
-            raise ConceptAgentError(
-                f"Diversify response missing '{key}' key"
-            )
+            raise ConceptAgentError(f"Diversify response missing '{key}' key")
 
     keep_indices = response["keep"]
     mutate_entries = response["mutate"]
@@ -203,36 +180,24 @@ async def diversify(
 
     for i, m in enumerate(mutate_entries):
         if not isinstance(m, dict) or "index" not in m:
-            raise ConceptAgentError(
-                f"mutate entry {i} must be a dict with 'index'"
-            )
+            raise ConceptAgentError(f"mutate entry {i} must be a dict with 'index'")
 
     num_briefs = len(briefs)
 
     all_indices = (
-        list(keep_indices)
-        + [m["index"] for m in mutate_entries]
-        + list(drop_indices)
+        list(keep_indices) + [m["index"] for m in mutate_entries] + list(drop_indices)
     )
     for idx in all_indices:
         if idx < 0 or idx >= num_briefs:
-            raise ConceptAgentError(
-                f"Index {idx} out of range for {num_briefs} briefs"
-            )
+            raise ConceptAgentError(f"Index {idx} out of range for {num_briefs} briefs")
 
     # Validate disjoint partition
     keep_set = set(keep_indices)
     mutate_set = {m["index"] for m in mutate_entries}
     drop_set = set(drop_indices)
-    overlap = (
-        (keep_set & mutate_set)
-        | (keep_set & drop_set)
-        | (mutate_set & drop_set)
-    )
+    overlap = (keep_set & mutate_set) | (keep_set & drop_set) | (mutate_set & drop_set)
     if overlap:
-        raise ConceptAgentError(
-            f"Indices {overlap} appear in multiple buckets"
-        )
+        raise ConceptAgentError(f"Indices {overlap} appear in multiple buckets")
 
     result: list[BriefCreate] = []
 
@@ -276,12 +241,8 @@ class ConceptAgent:
     def __init__(self, llm: LLMProvider):
         self.llm = llm
 
-    async def generate_briefs(
-        self, game_profile: GameProfileRead
-    ) -> list[BriefCreate]:
+    async def generate_briefs(self, game_profile: GameProfileRead) -> list[BriefCreate]:
         """Run the full concept generation pipeline."""
         directions = await strategize(game_profile, self.llm)
-        briefs = await expand(
-            game_profile, directions, self.llm
-        )
+        briefs = await expand(game_profile, directions, self.llm)
         return await diversify(briefs, self.llm)

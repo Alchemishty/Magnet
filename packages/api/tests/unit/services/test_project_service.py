@@ -210,9 +210,7 @@ def test_create_game_profile_project_not_found(mock_proj_repo, mock_prof_repo):
 @patch(f"{MODULE}.GameProfileRepository")
 @patch(f"{MODULE}.ProjectRepository")
 def test_create_game_profile_duplicate(mock_proj_repo, mock_prof_repo):
-    service, proj_repo, prof_repo = _make_service(
-        mock_proj_repo, mock_prof_repo
-    )
+    service, proj_repo, prof_repo = _make_service(mock_proj_repo, mock_prof_repo)
     project_id = uuid4()
     proj_repo.get_by_id.return_value = MagicMock()
     prof_repo.get_by_project_id.return_value = MagicMock()  # exists

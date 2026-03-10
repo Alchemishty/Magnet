@@ -39,9 +39,7 @@ def service(session, asset_repo, project_repo):
 
 
 class TestCreateAsset:
-    def test_creates_asset_when_project_exists(
-        self, service, asset_repo, project_repo
-    ):
+    def test_creates_asset_when_project_exists(self, service, asset_repo, project_repo):
         project_id = uuid4()
         data = AssetCreate(
             project_id=project_id,
@@ -59,9 +57,7 @@ class TestCreateAsset:
         asset_repo.create_from_schema.assert_called_once_with(data)
         assert result is expected
 
-    def test_raises_not_found_when_project_missing(
-        self, service, project_repo
-    ):
+    def test_raises_not_found_when_project_missing(self, service, project_repo):
         project_id = uuid4()
         data = AssetCreate(
             project_id=project_id,
@@ -89,22 +85,16 @@ class TestListAssets:
 
         result = service.list_assets(project_id)
 
-        asset_repo.list_by_project.assert_called_once_with(
-            project_id, None, 0, 100
-        )
+        asset_repo.list_by_project.assert_called_once_with(project_id, None, 0, 100)
         assert result is expected
 
     def test_passes_filters(self, service, asset_repo):
         project_id = uuid4()
         asset_repo.list_by_project.return_value = []
 
-        service.list_assets(
-            project_id, asset_type="logo", offset=10, limit=50
-        )
+        service.list_assets(project_id, asset_type="logo", offset=10, limit=50)
 
-        asset_repo.list_by_project.assert_called_once_with(
-            project_id, "logo", 10, 50
-        )
+        asset_repo.list_by_project.assert_called_once_with(project_id, "logo", 10, 50)
 
 
 # ---- get_asset ----

@@ -45,12 +45,8 @@ class TestBriefRepositoryIntegration:
         _, project = self._create_user_and_project(db_session)
         repo = BriefRepository(db_session)
 
-        repo.create_from_schema(
-            BriefCreate(project_id=project.id, status="draft")
-        )
-        repo.create_from_schema(
-            BriefCreate(project_id=project.id, status="approved")
-        )
+        repo.create_from_schema(BriefCreate(project_id=project.id, status="draft"))
+        repo.create_from_schema(BriefCreate(project_id=project.id, status="approved"))
 
         briefs = repo.list_by_project(project.id)
 
@@ -60,12 +56,8 @@ class TestBriefRepositoryIntegration:
         _, project = self._create_user_and_project(db_session)
         repo = BriefRepository(db_session)
 
-        repo.create_from_schema(
-            BriefCreate(project_id=project.id, status="draft")
-        )
-        repo.create_from_schema(
-            BriefCreate(project_id=project.id, status="approved")
-        )
+        repo.create_from_schema(BriefCreate(project_id=project.id, status="draft"))
+        repo.create_from_schema(BriefCreate(project_id=project.id, status="approved"))
 
         briefs = repo.list_by_project(project.id, status="approved")
 
@@ -80,9 +72,7 @@ class TestBriefRepositoryIntegration:
             BriefCreate(project_id=project.id, status="draft")
         )
 
-        updated = repo.update_from_schema(
-            brief.id, BriefUpdate(status="approved")
-        )
+        updated = repo.update_from_schema(brief.id, BriefUpdate(status="approved"))
 
         assert updated is not None
         assert updated.status == "approved"
@@ -91,9 +81,7 @@ class TestBriefRepositoryIntegration:
         _, project = self._create_user_and_project(db_session)
         repo = BriefRepository(db_session)
 
-        brief = repo.create_from_schema(
-            BriefCreate(project_id=project.id)
-        )
+        brief = repo.create_from_schema(BriefCreate(project_id=project.id))
 
         result = repo.delete(brief.id)
 

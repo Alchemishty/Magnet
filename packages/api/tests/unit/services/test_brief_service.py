@@ -39,9 +39,7 @@ class TestListBriefs:
 
         result = service.list_briefs(project_id)
 
-        repo.list_by_project.assert_called_once_with(
-            project_id, None, 0, 100
-        )
+        repo.list_by_project.assert_called_once_with(project_id, None, 0, 100)
         assert result == expected
 
     def test_passes_optional_params(self, mock_repo):
@@ -51,9 +49,7 @@ class TestListBriefs:
 
         service.list_briefs(project_id, status="draft", offset=10, limit=25)
 
-        repo.list_by_project.assert_called_once_with(
-            project_id, "draft", 10, 25
-        )
+        repo.list_by_project.assert_called_once_with(project_id, "draft", 10, 25)
 
     def test_returns_empty_list(self, mock_repo):
         service, repo = mock_repo

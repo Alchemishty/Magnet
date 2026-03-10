@@ -15,9 +15,7 @@ def pytest_collection_modifyitems(config, items):
     if test_db_url:
         return
 
-    skip_integration = pytest.mark.skip(
-        reason="TEST_DATABASE_URL not set"
-    )
+    skip_integration = pytest.mark.skip(reason="TEST_DATABASE_URL not set")
     for item in items:
         if "integration" in item.keywords:
             item.add_marker(skip_integration)

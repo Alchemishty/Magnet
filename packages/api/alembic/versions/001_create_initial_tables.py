@@ -5,6 +5,7 @@ Revises:
 Create Date: 2026-03-09
 
 """
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -159,9 +160,7 @@ def upgrade() -> None:
             sa.DateTime(timezone=True),
             nullable=True,
         ),
-        sa.ForeignKeyConstraint(
-            ["project_id"], ["projects.id"]
-        ),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.id"]),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("project_id"),
     )
@@ -235,9 +234,7 @@ def upgrade() -> None:
             sa.DateTime(timezone=True),
             nullable=True,
         ),
-        sa.ForeignKeyConstraint(
-            ["project_id"], ["projects.id"]
-        ),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
@@ -269,9 +266,7 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("script", sa.Text(), nullable=True),
-        sa.Column(
-            "voiceover_text", sa.Text(), nullable=True
-        ),
+        sa.Column("voiceover_text", sa.Text(), nullable=True),
         sa.Column(
             "target_emotion",
             sa.String(100),
@@ -328,9 +323,7 @@ def upgrade() -> None:
             sa.DateTime(timezone=True),
             nullable=True,
         ),
-        sa.ForeignKeyConstraint(
-            ["project_id"], ["projects.id"]
-        ),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
@@ -372,9 +365,7 @@ def upgrade() -> None:
             sa.Integer(),
             nullable=True,
         ),
-        sa.Column(
-            "error_message", sa.Text(), nullable=True
-        ),
+        sa.Column("error_message", sa.Text(), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -386,9 +377,7 @@ def upgrade() -> None:
             sa.DateTime(timezone=True),
             nullable=True,
         ),
-        sa.ForeignKeyConstraint(
-            ["brief_id"], ["creative_briefs.id"]
-        ),
+        sa.ForeignKeyConstraint(["brief_id"], ["creative_briefs.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(

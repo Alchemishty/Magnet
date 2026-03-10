@@ -80,9 +80,7 @@ class TestCreateJob:
 
     def test_returns_404_when_brief_missing(self, client, mock_service):
         brief_id = uuid4()
-        mock_service.create_job.side_effect = NotFoundError(
-            "CreativeBrief", brief_id
-        )
+        mock_service.create_job.side_effect = NotFoundError("CreativeBrief", brief_id)
 
         resp = client.post(
             f"/api/briefs/{brief_id}/jobs",
@@ -135,9 +133,7 @@ class TestGetJob:
 
     def test_returns_404(self, client, mock_service):
         job_id = uuid4()
-        mock_service.get_job.side_effect = NotFoundError(
-            "RenderJob", job_id
-        )
+        mock_service.get_job.side_effect = NotFoundError("RenderJob", job_id)
 
         resp = client.get(f"/api/jobs/{job_id}")
 
@@ -162,9 +158,7 @@ class TestUpdateJob:
 
     def test_returns_404(self, client, mock_service):
         job_id = uuid4()
-        mock_service.update_job.side_effect = NotFoundError(
-            "RenderJob", job_id
-        )
+        mock_service.update_job.side_effect = NotFoundError("RenderJob", job_id)
 
         resp = client.patch(
             f"/api/jobs/{job_id}",

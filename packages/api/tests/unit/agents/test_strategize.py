@@ -60,11 +60,7 @@ class TestStrategize:
             await strategize(profile, mock)
 
     async def test_missing_keys_in_direction_raises_error(self):
-        bad_response = {
-            "directions": [
-                {"hook_type": "Fail/Challenge"}
-            ]
-        }
+        bad_response = {"directions": [{"hook_type": "Fail/Challenge"}]}
         mock = MockLLMProvider(response=bad_response)
         profile = make_game_profile()
 

@@ -4,9 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-BriefStatus = Literal[
-    "draft", "approved", "producing", "complete"
-]
+BriefStatus = Literal["draft", "approved", "producing", "complete"]
 GeneratedBy = Literal["agent", "human"]
 
 

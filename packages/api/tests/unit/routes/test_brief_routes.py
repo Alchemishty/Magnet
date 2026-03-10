@@ -22,7 +22,7 @@ from app.routes.dependencies import (
     get_concept_service,
 )
 
-#Helpers
+# Helpers
 
 
 def _make_brief(**overrides):
@@ -52,7 +52,7 @@ def _make_brief(**overrides):
     return obj
 
 
-#Fixtures
+# Fixtures
 
 
 @pytest.fixture()
@@ -80,7 +80,7 @@ def client(mock_brief_service, mock_concept_service, mock_concept_agent):
     return TestClient(test_app)
 
 
-#GET /api/projects/{project_id}/briefs
+# GET /api/projects/{project_id}/briefs
 
 
 class TestListBriefs:
@@ -123,7 +123,7 @@ class TestListBriefs:
         assert resp.json()["detail"] == "db down"
 
 
-#POST /api/projects/{project_id}/concepts
+# POST /api/projects/{project_id}/concepts
 
 
 class TestGenerateConcepts:
@@ -176,9 +176,7 @@ class TestGenerateConcepts:
 
         assert resp.status_code == 502
 
-    def test_value_error_returns_500_config_error(
-        self, client, mock_concept_service
-    ):
+    def test_value_error_returns_500_config_error(self, client, mock_concept_service):
         mock_concept_service.generate_concepts.side_effect = ValueError(
             "ANTHROPIC_API_KEY environment variable is required"
         )
@@ -189,7 +187,7 @@ class TestGenerateConcepts:
         assert "LLM configuration error" in resp.json()["detail"]
 
 
-#GET /api/briefs/{brief_id}
+# GET /api/briefs/{brief_id}
 
 
 class TestGetBrief:
@@ -221,7 +219,7 @@ class TestGetBrief:
         assert resp.status_code == 500
 
 
-#PATCH /api/briefs/{brief_id}
+# PATCH /api/briefs/{brief_id}
 
 
 class TestUpdateBrief:
@@ -260,7 +258,7 @@ class TestUpdateBrief:
         assert resp.status_code == 500
 
 
-#DELETE /api/briefs/{brief_id}
+# DELETE /api/briefs/{brief_id}
 
 
 class TestDeleteBrief:

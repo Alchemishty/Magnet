@@ -33,9 +33,7 @@ class BriefService:
             raise NotFoundError("CreativeBrief", brief_id)
         return brief
 
-    def update_brief(
-        self, brief_id: UUID, data: BriefUpdate
-    ) -> CreativeBrief:
+    def update_brief(self, brief_id: UUID, data: BriefUpdate) -> CreativeBrief:
         """Update a brief. Raises NotFoundError if missing."""
         brief = self._repo.update_from_schema(brief_id, data)
         if brief is None:

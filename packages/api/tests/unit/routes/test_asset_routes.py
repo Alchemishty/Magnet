@@ -79,9 +79,7 @@ class TestCreateAsset:
 
     def test_create_project_not_found_returns_404(self, client, mock_service):
         project_id = uuid4()
-        mock_service.create_asset.side_effect = NotFoundError(
-            "Project", project_id
-        )
+        mock_service.create_asset.side_effect = NotFoundError("Project", project_id)
 
         response = client.post(
             f"/api/projects/{project_id}/assets",
@@ -163,9 +161,7 @@ class TestDeleteAsset:
 
     def test_delete_not_found_returns_404(self, client, mock_service):
         asset_id = uuid4()
-        mock_service.delete_asset.side_effect = NotFoundError(
-            "Asset", asset_id
-        )
+        mock_service.delete_asset.side_effect = NotFoundError("Asset", asset_id)
 
         response = client.delete(f"/api/assets/{asset_id}")
 

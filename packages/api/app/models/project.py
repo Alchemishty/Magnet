@@ -18,24 +18,16 @@ if TYPE_CHECKING:
 class Project(BaseModel):
     __tablename__ = "projects"
 
-    user_id: Mapped[UUID] = mapped_column(
-        ForeignKey("users.id"), nullable=False
-    )
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    status: Mapped[str] = mapped_column(
-        String(50), server_default="active"
-    )
+    status: Mapped[str] = mapped_column(String(50), server_default="active")
 
     user: Mapped[User] = relationship(back_populates="projects")
     game_profile: Mapped[GameProfile | None] = relationship(
         back_populates="project", uselist=False
     )
-    assets: Mapped[list[Asset]] = relationship(
-        back_populates="project"
-    )
-    briefs: Mapped[list[CreativeBrief]] = relationship(
-        back_populates="project"
-    )
+    assets: Mapped[list[Asset]] = relationship(back_populates="project")
+    briefs: Mapped[list[CreativeBrief]] = relationship(back_populates="project")
 
     def __init__(self, **kwargs):
         kwargs.setdefault("status", "active")
@@ -56,6 +48,4 @@ class GameProfile(BaseModel):
     competitors: Mapped[list | None] = mapped_column(JSONB)
     key_selling_points: Mapped[list | None] = mapped_column(JSONB)
 
-    project: Mapped[Project] = relationship(
-        back_populates="game_profile"
-    )
+    project: Mapped[Project] = relationship(back_populates="game_profile")

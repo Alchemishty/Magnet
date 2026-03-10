@@ -5,9 +5,7 @@ from pathlib import Path
 
 class TestMigrationSetup:
     def test_migration_file_exists(self):
-        migration = Path(
-            "alembic/versions/001_create_initial_tables.py"
-        )
+        migration = Path("alembic/versions/001_create_initial_tables.py")
 
         assert migration.exists()
 
@@ -37,36 +35,19 @@ class TestMigrationSetup:
 
         tables = Base.metadata.tables
 
-        projects_fks = {
-            str(fk.column)
-            for fk in tables["projects"].foreign_keys
-        }
+        projects_fks = {str(fk.column) for fk in tables["projects"].foreign_keys}
         assert "users.id" in projects_fks
 
-        profiles_fks = {
-            str(fk.column)
-            for fk in tables["game_profiles"].foreign_keys
-        }
+        profiles_fks = {str(fk.column) for fk in tables["game_profiles"].foreign_keys}
         assert "projects.id" in profiles_fks
 
-        assets_fks = {
-            str(fk.column)
-            for fk in tables["assets"].foreign_keys
-        }
+        assets_fks = {str(fk.column) for fk in tables["assets"].foreign_keys}
         assert "projects.id" in assets_fks
 
-        briefs_fks = {
-            str(fk.column)
-            for fk in tables[
-                "creative_briefs"
-            ].foreign_keys
-        }
+        briefs_fks = {str(fk.column) for fk in tables["creative_briefs"].foreign_keys}
         assert "projects.id" in briefs_fks
 
-        jobs_fks = {
-            str(fk.column)
-            for fk in tables["render_jobs"].foreign_keys
-        }
+        jobs_fks = {str(fk.column) for fk in tables["render_jobs"].foreign_keys}
         assert "creative_briefs.id" in jobs_fks
 
     def test_indexes_on_foreign_keys(self):
@@ -74,19 +55,11 @@ class TestMigrationSetup:
 
         tables = Base.metadata.tables
 
-        asset_indexes = {
-            idx.name for idx in tables["assets"].indexes
-        }
+        asset_indexes = {idx.name for idx in tables["assets"].indexes}
         assert any("project_id" in n for n in asset_indexes)
 
-        brief_indexes = {
-            idx.name
-            for idx in tables["creative_briefs"].indexes
-        }
+        brief_indexes = {idx.name for idx in tables["creative_briefs"].indexes}
         assert any("project_id" in n for n in brief_indexes)
 
-        job_indexes = {
-            idx.name
-            for idx in tables["render_jobs"].indexes
-        }
+        job_indexes = {idx.name for idx in tables["render_jobs"].indexes}
         assert any("brief_id" in n for n in job_indexes)

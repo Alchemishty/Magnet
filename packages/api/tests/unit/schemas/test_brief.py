@@ -24,24 +24,16 @@ class TestBriefCreate:
 
     def test_rejects_invalid_status(self):
         with pytest.raises(ValidationError):
-            BriefCreate(
-                project_id=uuid4(), status="invalid"
-            )
+            BriefCreate(project_id=uuid4(), status="invalid")
 
     def test_rejects_invalid_generated_by(self):
         with pytest.raises(ValidationError):
-            BriefCreate(
-                project_id=uuid4(), generated_by="robot"
-            )
+            BriefCreate(project_id=uuid4(), generated_by="robot")
 
     def test_accepts_scene_plan(self):
         schema = BriefCreate(
             project_id=uuid4(),
-            scene_plan={
-                "scenes": [
-                    {"strategy": "COMPOSE", "duration": 5}
-                ]
-            },
+            scene_plan={"scenes": [{"strategy": "COMPOSE", "duration": 5}]},
         )
 
         assert schema.scene_plan is not None

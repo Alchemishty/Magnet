@@ -44,20 +44,14 @@ class TestDatabaseConnection:
         db_session.add(user)
         db_session.flush()
 
-        queried = (
-            db_session.query(User)
-            .filter_by(email="integration@test.com")
-            .first()
-        )
+        queried = db_session.query(User).filter_by(email="integration@test.com").first()
 
         assert queried is not None
         assert queried.name == "Integration Test"
         assert queried.role == "creator"
         assert queried.id is not None
 
-    def test_session_rollback_isolation(
-        self, db_session, db_engine
-    ):
+    def test_session_rollback_isolation(self, db_session, db_engine):
         user = User(
             email="rollback@test.com",
             name="Rollback Test",
@@ -72,13 +66,10 @@ class TestDatabaseConnection:
         fresh_session = sessionmaker(bind=db_engine)()
         try:
             count = (
-                fresh_session.query(User)
-                .filter_by(email="rollback@test.com")
-                .count()
+                fresh_session.query(User).filter_by(email="rollback@test.com").count()
             )
             assert count == 0, (
-                "Row should not be visible outside the "
-                "uncommitted transaction"
+                "Row should not be visible outside the uncommitted transaction"
             )
         finally:
             fresh_session.close()

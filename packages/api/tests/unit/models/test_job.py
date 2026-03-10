@@ -48,9 +48,7 @@ class TestRenderJob:
                 },
             ],
         }
-        job = RenderJob(
-            brief_id=uuid4(), composition=composition
-        )
+        job = RenderJob(brief_id=uuid4(), composition=composition)
 
         assert job.composition["duration"] == 15
         assert len(job.composition["layers"]) == 2

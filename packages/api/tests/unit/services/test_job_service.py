@@ -25,12 +25,8 @@ def service(session):
 
 
 class TestCreateJob:
-    @patch(
-        "app.services.job_service.BriefRepository"
-    )
-    @patch(
-        "app.services.job_service.RenderJobRepository"
-    )
+    @patch("app.services.job_service.BriefRepository")
+    @patch("app.services.job_service.RenderJobRepository")
     def test_creates_job_when_brief_exists(
         self, mock_job_repo, mock_brief_repo, session
     ):
@@ -50,12 +46,8 @@ class TestCreateJob:
         mock_job_repo.create_from_schema.assert_called_once_with(data)
         assert result is expected_job
 
-    @patch(
-        "app.services.job_service.BriefRepository"
-    )
-    @patch(
-        "app.services.job_service.RenderJobRepository"
-    )
+    @patch("app.services.job_service.BriefRepository")
+    @patch("app.services.job_service.RenderJobRepository")
     def test_raises_not_found_when_brief_missing(
         self, mock_job_repo, mock_brief_repo, session
     ):
@@ -77,9 +69,7 @@ class TestCreateJob:
 
 
 class TestListJobs:
-    @patch(
-        "app.services.job_service.RenderJobRepository"
-    )
+    @patch("app.services.job_service.RenderJobRepository")
     def test_lists_jobs_delegates_to_repo(self, mock_job_repo, session):
         brief_id = uuid4()
         expected = [MagicMock(spec=RenderJob)]
@@ -94,9 +84,7 @@ class TestListJobs:
         )
         assert result is expected
 
-    @patch(
-        "app.services.job_service.RenderJobRepository"
-    )
+    @patch("app.services.job_service.RenderJobRepository")
     def test_lists_jobs_uses_defaults(self, mock_job_repo, session):
         brief_id = uuid4()
         mock_repo = mock_job_repo.return_value
@@ -115,9 +103,7 @@ class TestListJobs:
 
 
 class TestGetJob:
-    @patch(
-        "app.services.job_service.RenderJobRepository"
-    )
+    @patch("app.services.job_service.RenderJobRepository")
     def test_returns_job_when_found(self, mock_job_repo, session):
         job_id = uuid4()
         expected = MagicMock(spec=RenderJob)
@@ -130,9 +116,7 @@ class TestGetJob:
         mock_repo.get_by_id.assert_called_once_with(job_id)
         assert result is expected
 
-    @patch(
-        "app.services.job_service.RenderJobRepository"
-    )
+    @patch("app.services.job_service.RenderJobRepository")
     def test_raises_not_found_when_missing(self, mock_job_repo, session):
         job_id = uuid4()
         mock_repo = mock_job_repo.return_value
@@ -151,9 +135,7 @@ class TestGetJob:
 
 
 class TestUpdateJob:
-    @patch(
-        "app.services.job_service.RenderJobRepository"
-    )
+    @patch("app.services.job_service.RenderJobRepository")
     def test_updates_job_when_found(self, mock_job_repo, session):
         job_id = uuid4()
         expected = MagicMock(spec=RenderJob)
@@ -167,9 +149,7 @@ class TestUpdateJob:
         mock_repo.update_from_schema.assert_called_once_with(job_id, data)
         assert result is expected
 
-    @patch(
-        "app.services.job_service.RenderJobRepository"
-    )
+    @patch("app.services.job_service.RenderJobRepository")
     def test_raises_not_found_when_missing(self, mock_job_repo, session):
         job_id = uuid4()
         mock_repo = mock_job_repo.return_value

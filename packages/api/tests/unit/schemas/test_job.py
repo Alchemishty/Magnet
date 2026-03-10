@@ -20,23 +20,15 @@ class TestJobCreate:
         comp = Composition(
             duration=15,
             resolution=[1080, 1920],
-            layers=[
-                CompositionLayer(
-                    type="video", start=0, end=8
-                )
-            ],
+            layers=[CompositionLayer(type="video", start=0, end=8)],
         )
-        schema = JobCreate(
-            brief_id=uuid4(), composition=comp
-        )
+        schema = JobCreate(brief_id=uuid4(), composition=comp)
 
         assert schema.composition.duration == 15
 
     def test_rejects_invalid_status(self):
         with pytest.raises(ValidationError):
-            JobCreate(
-                brief_id=uuid4(), status="invalid"
-            )
+            JobCreate(brief_id=uuid4(), status="invalid")
 
 
 class TestJobUpdate:

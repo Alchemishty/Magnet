@@ -55,9 +55,7 @@ class TestGameProfileRepositoryIntegration:
             )
         )
 
-        updated = repo.update_from_schema(
-            profile.id, GameProfileUpdate(genre="action")
-        )
+        updated = repo.update_from_schema(profile.id, GameProfileUpdate(genre="action"))
 
         assert updated is not None
         assert updated.genre == "action"

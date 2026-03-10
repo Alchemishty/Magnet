@@ -12,9 +12,7 @@ from tests.unit.agents.conftest import (
 
 
 class TestConceptAgent:
-    def _build_full_responses(
-        self, num_directions: int = 2
-    ) -> list[dict]:
+    def _build_full_responses(self, num_directions: int = 2) -> list[dict]:
         """Build sequential responses for the full pipeline.
 
         Order: 1 strategize + N expand + 1 diversify.
@@ -60,9 +58,7 @@ class TestConceptAgent:
 
     async def test_correct_number_of_llm_calls(self):
         num_directions = 3
-        responses = self._build_full_responses(
-            num_directions=num_directions
-        )
+        responses = self._build_full_responses(num_directions=num_directions)
         mock = MockLLMProvider(responses=responses)
         agent = ConceptAgent(llm=mock)
         profile = make_game_profile()
@@ -85,9 +81,7 @@ class TestConceptAgent:
         assert len(mock.calls) == 1
 
     async def test_provider_error_propagates(self):
-        error_mock = MockLLMProviderError(
-            error=RuntimeError("LLM down")
-        )
+        error_mock = MockLLMProviderError(error=RuntimeError("LLM down"))
         agent = ConceptAgent(llm=error_mock)
         profile = make_game_profile()
 

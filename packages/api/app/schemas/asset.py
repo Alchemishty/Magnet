@@ -4,9 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-AssetType = Literal[
-    "gameplay", "screenshot", "logo", "character", "audio"
-]
+AssetType = Literal["gameplay", "screenshot", "logo", "character", "audio"]
 
 
 class AssetCreateBody(BaseModel):

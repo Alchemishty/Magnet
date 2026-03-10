@@ -213,9 +213,7 @@ class TestGetGameProfile:
 
     def test_returns_404_when_not_found(self, client, mock_service):
         pid = uuid4()
-        mock_service.get_game_profile.side_effect = NotFoundError(
-            "GameProfile", pid
-        )
+        mock_service.get_game_profile.side_effect = NotFoundError("GameProfile", pid)
 
         resp = client.get(f"/api/projects/{pid}/game-profile")
 
@@ -241,9 +239,7 @@ class TestUpdateGameProfile:
 
     def test_returns_404_when_not_found(self, client, mock_service):
         pid = uuid4()
-        mock_service.update_game_profile.side_effect = NotFoundError(
-            "GameProfile", pid
-        )
+        mock_service.update_game_profile.side_effect = NotFoundError("GameProfile", pid)
 
         resp = client.patch(
             f"/api/projects/{pid}/game-profile",

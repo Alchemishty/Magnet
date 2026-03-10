@@ -44,21 +44,15 @@ class TestCompositionLayer:
 
     def test_rejects_invalid_type(self):
         with pytest.raises(ValidationError):
-            CompositionLayer(
-                type="invalid", start=0, end=5
-            )
+            CompositionLayer(type="invalid", start=0, end=5)
 
     def test_position_accepts_list(self):
-        layer = CompositionLayer(
-            type="video", start=0, end=5, position=[0, 100]
-        )
+        layer = CompositionLayer(type="video", start=0, end=5, position=[0, 100])
 
         assert layer.position == [0, 100]
 
     def test_position_accepts_string(self):
-        layer = CompositionLayer(
-            type="video", start=0, end=5, position="center"
-        )
+        layer = CompositionLayer(type="video", start=0, end=5, position="center")
 
         assert layer.position == "center"
 

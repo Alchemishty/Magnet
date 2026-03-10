@@ -63,12 +63,8 @@ class TestUserRepositoryIntegration:
 
     def test_list_users(self, db_session):
         repo = UserRepository(db_session)
-        repo.create_from_schema(
-            UserCreate(email="list1@example.com", name="One")
-        )
-        repo.create_from_schema(
-            UserCreate(email="list2@example.com", name="Two")
-        )
+        repo.create_from_schema(UserCreate(email="list1@example.com", name="One"))
+        repo.create_from_schema(UserCreate(email="list2@example.com", name="Two"))
 
         users = repo.list()
 

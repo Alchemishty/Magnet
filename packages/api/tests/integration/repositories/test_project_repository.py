@@ -31,12 +31,8 @@ class TestProjectRepositoryIntegration:
         )
 
         repo = ProjectRepository(db_session)
-        repo.create_from_schema(
-            ProjectCreate(name="Game A", user_id=user.id)
-        )
-        repo.create_from_schema(
-            ProjectCreate(name="Game B", user_id=user.id)
-        )
+        repo.create_from_schema(ProjectCreate(name="Game A", user_id=user.id))
+        repo.create_from_schema(ProjectCreate(name="Game B", user_id=user.id))
 
         projects = repo.list_by_user(user.id)
 
@@ -49,13 +45,9 @@ class TestProjectRepositoryIntegration:
         )
 
         repo = ProjectRepository(db_session)
-        project = repo.create_from_schema(
-            ProjectCreate(name="Before", user_id=user.id)
-        )
+        project = repo.create_from_schema(ProjectCreate(name="Before", user_id=user.id))
 
-        updated = repo.update_from_schema(
-            project.id, ProjectUpdate(name="After")
-        )
+        updated = repo.update_from_schema(project.id, ProjectUpdate(name="After"))
 
         assert updated is not None
         assert updated.name == "After"

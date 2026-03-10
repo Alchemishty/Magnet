@@ -24,9 +24,7 @@ class BaseRepository(Generic[T]):
             self._session.flush()
             return instance
         except SQLAlchemyError as e:
-            raise DatabaseError(
-                f"Failed to create {self._model_class.__name__}"
-            ) from e
+            raise DatabaseError(f"Failed to create {self._model_class.__name__}") from e
 
     def get_by_id(self, entity_id: UUID) -> T | None:
         """Fetch an entity by primary key. Returns None if not found."""
@@ -34,8 +32,7 @@ class BaseRepository(Generic[T]):
             return self._session.get(self._model_class, entity_id)
         except SQLAlchemyError as e:
             raise DatabaseError(
-                f"Failed to fetch {self._model_class.__name__} "
-                f"with id {entity_id}"
+                f"Failed to fetch {self._model_class.__name__} with id {entity_id}"
             ) from e
 
     def list(
@@ -54,14 +51,10 @@ class BaseRepository(Generic[T]):
                             f"Invalid filter key '{key}' for "
                             f"{self._model_class.__name__}"
                         )
-                    query = query.filter(
-                        getattr(self._model_class, key) == value
-                    )
+                    query = query.filter(getattr(self._model_class, key) == value)
             return query.offset(offset).limit(limit).all()
         except SQLAlchemyError as e:
-            raise DatabaseError(
-                f"Failed to list {self._model_class.__name__}"
-            ) from e
+            raise DatabaseError(f"Failed to list {self._model_class.__name__}") from e
 
     def update(self, entity_id: UUID, data: dict) -> T | None:
         """Update an entity by ID with a dict of changes.
@@ -75,16 +68,14 @@ class BaseRepository(Generic[T]):
             for key, value in data.items():
                 if not hasattr(instance, key):
                     raise DatabaseError(
-                        f"Invalid attribute '{key}' for "
-                        f"{self._model_class.__name__}"
+                        f"Invalid attribute '{key}' for {self._model_class.__name__}"
                     )
                 setattr(instance, key, value)
             self._session.flush()
             return instance
         except SQLAlchemyError as e:
             raise DatabaseError(
-                f"Failed to update {self._model_class.__name__} "
-                f"with id {entity_id}"
+                f"Failed to update {self._model_class.__name__} with id {entity_id}"
             ) from e
 
     def delete(self, entity_id: UUID) -> bool:
@@ -98,6 +89,5 @@ class BaseRepository(Generic[T]):
             return True
         except SQLAlchemyError as e:
             raise DatabaseError(
-                f"Failed to delete {self._model_class.__name__} "
-                f"with id {entity_id}"
+                f"Failed to delete {self._model_class.__name__} with id {entity_id}"
             ) from e

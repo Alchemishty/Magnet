@@ -31,9 +31,7 @@ class ProjectRepository(BaseRepository[Project]):
                 .all()
             )
         except SQLAlchemyError as e:
-            raise DatabaseError(
-                f"Failed to list projects for user {user_id}"
-            ) from e
+            raise DatabaseError(f"Failed to list projects for user {user_id}") from e
 
     def create_from_schema(self, schema: ProjectCreate) -> Project:
         """Create a project from a ProjectCreate schema."""

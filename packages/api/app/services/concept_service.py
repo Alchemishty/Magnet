@@ -23,9 +23,7 @@ class ConceptService:
     async def generate_concepts(
         self,
         project_id: UUID,
-        generate_briefs_fn: Callable[
-            [GameProfileRead], Awaitable[list[BriefCreate]]
-        ],
+        generate_briefs_fn: Callable[[GameProfileRead], Awaitable[list[BriefCreate]]],
     ) -> list[CreativeBrief]:
         """Generate creative briefs for a project.
 
@@ -56,6 +54,4 @@ class ConceptService:
         profile_schema = GameProfileRead.model_validate(game_profile)
         brief_schemas = await generate_briefs_fn(profile_schema)
 
-        return [
-            self._brief_repo.create_from_schema(s) for s in brief_schemas
-        ]
+        return [self._brief_repo.create_from_schema(s) for s in brief_schemas]

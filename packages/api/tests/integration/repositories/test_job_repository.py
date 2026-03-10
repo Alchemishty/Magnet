@@ -44,9 +44,7 @@ class TestRenderJobRepositoryIntegration:
         repo = RenderJobRepository(db_session)
 
         repo.create_from_schema(JobCreate(brief_id=brief.id))
-        repo.create_from_schema(
-            JobCreate(brief_id=brief.id, status="rendering")
-        )
+        repo.create_from_schema(JobCreate(brief_id=brief.id, status="rendering"))
 
         jobs = repo.list_by_brief(brief.id)
 
@@ -57,9 +55,7 @@ class TestRenderJobRepositoryIntegration:
         repo = RenderJobRepository(db_session)
 
         repo.create_from_schema(JobCreate(brief_id=brief.id))
-        repo.create_from_schema(
-            JobCreate(brief_id=brief.id, status="rendering")
-        )
+        repo.create_from_schema(JobCreate(brief_id=brief.id, status="rendering"))
 
         jobs = repo.list_by_brief(brief.id, status="rendering")
 

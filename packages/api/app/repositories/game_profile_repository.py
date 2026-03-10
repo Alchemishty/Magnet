@@ -28,9 +28,7 @@ class GameProfileRepository(BaseRepository[GameProfile]):
                 f"Failed to fetch game profile for project {project_id}"
             ) from e
 
-    def create_from_schema(
-        self, schema: GameProfileCreate
-    ) -> GameProfile:
+    def create_from_schema(self, schema: GameProfileCreate) -> GameProfile:
         """Create a game profile from a GameProfileCreate schema."""
         return self.create(schema.model_dump())
 

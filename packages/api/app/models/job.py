@@ -21,17 +21,13 @@ class RenderJob(BaseModel):
         nullable=False,
         index=True,
     )
-    status: Mapped[str] = mapped_column(
-        String(50), server_default="queued"
-    )
+    status: Mapped[str] = mapped_column(String(50), server_default="queued")
     composition: Mapped[dict | None] = mapped_column(JSONB)
     output_s3_key: Mapped[str | None] = mapped_column(String(500))
     render_duration_ms: Mapped[int | None] = mapped_column(Integer)
     error_message: Mapped[str | None] = mapped_column(Text)
 
-    brief: Mapped[CreativeBrief] = relationship(
-        back_populates="render_jobs"
-    )
+    brief: Mapped[CreativeBrief] = relationship(back_populates="render_jobs")
 
     def __init__(self, **kwargs):
         kwargs.setdefault("status", "queued")
