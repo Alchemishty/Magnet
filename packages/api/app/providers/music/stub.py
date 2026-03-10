@@ -1,6 +1,5 @@
 """Stub music provider — generates silent WAV audio."""
 
-import struct
 import wave
 from io import BytesIO
 

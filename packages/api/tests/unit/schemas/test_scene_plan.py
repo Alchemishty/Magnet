@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.schemas.scene_plan import AudioPlan, Scene, ScenePlan, VoiceoverPlan, MusicPlan
+from app.schemas.scene_plan import AudioPlan, MusicPlan, Scene, ScenePlan, VoiceoverPlan
 
 
 class TestScene:

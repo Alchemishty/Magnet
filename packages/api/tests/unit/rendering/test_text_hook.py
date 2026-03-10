@@ -16,11 +16,11 @@ class TestGenerateFrames:
     def test_produces_correct_frame_count(self, renderer):
         frames = renderer.generate_frames(
             params={"text": "Can you beat this?"},
-            duration=2.0,
-            resolution=(1080, 1920),
-            fps=30,
+            duration=1.0,
+            resolution=(100, 100),
+            fps=10,
         )
-        assert len(frames) == 60
+        assert len(frames) == 10
 
     def test_frames_are_pil_images(self, renderer):
         from PIL import Image

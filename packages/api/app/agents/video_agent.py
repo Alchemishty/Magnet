@@ -3,12 +3,15 @@
 import logging
 import os
 
+import boto3
 from pydantic import ValidationError
 
 from app.providers.base import ImageProvider, MusicProvider, TTSProvider
+from app.rendering.assembler import assemble as assembler_assemble
 from app.rendering.templates import get_template
 from app.repositories.asset_repository import AssetRepository
 from app.schemas.brief import BriefRead
+from app.schemas.composition import Composition, CompositionLayer
 from app.schemas.execution_plan import ExecutionPlan, PreparedAudio, PreparedScene
 from app.schemas.scene_plan import ScenePlan
 
@@ -99,9 +102,8 @@ class VideoAgent:
                     )
                 else:
                     raise VideoAgentError(f"Unknown strategy: {scene.strategy}")
-                updated_scenes.append(
-                    prepared.model_copy(update={"status": "ready", "output_path": output})
-                )
+                update = {"status": "ready", "output_path": output}
+                updated_scenes.append(prepared.model_copy(update=update))
             except Exception as exc:
                 logger.warning("Scene %d failed: %s", prepared.index, exc)
                 updated_scenes.append(
@@ -168,24 +170,24 @@ class VideoAgent:
 
         for audio_entry in exec_plan.audio:
             try:
-                if audio_entry.type == "voiceover" and scene_plan.audio and scene_plan.audio.voiceover:
+                has_vo = scene_plan.audio and scene_plan.audio.voiceover
+                has_mu = scene_plan.audio and scene_plan.audio.music
+                if audio_entry.type == "voiceover" and has_vo:
                     vo = scene_plan.audio.voiceover
                     data = await self._tts.synthesize(vo.script, vo.voice)
                     path = os.path.join(exec_plan.work_dir, "voiceover.mp3")
                     with open(path, "wb") as f:
                         f.write(data)
-                    updated.append(
-                        audio_entry.model_copy(update={"status": "ready", "output_path": path})
-                    )
-                elif audio_entry.type == "music" and scene_plan.audio and scene_plan.audio.music:
+                    upd = {"status": "ready", "output_path": path}
+                    updated.append(audio_entry.model_copy(update=upd))
+                elif audio_entry.type == "music" and has_mu:
                     mu = scene_plan.audio.music
                     data = await self._music.generate(mu.prompt, int(total_duration))
                     path = os.path.join(exec_plan.work_dir, "music.wav")
                     with open(path, "wb") as f:
                         f.write(data)
-                    updated.append(
-                        audio_entry.model_copy(update={"status": "ready", "output_path": path})
-                    )
+                    upd = {"status": "ready", "output_path": path}
+                    updated.append(audio_entry.model_copy(update=upd))
                 else:
                     updated.append(audio_entry)
             except Exception as exc:
@@ -197,3 +199,95 @@ class VideoAgent:
                 )
 
         return updated
+
+    def assemble(
+        self, exec_plan: ExecutionPlan, scene_plan: ScenePlan
+    ) -> Composition:
+        """ASSEMBLE phase: build a Composition from prepared scenes."""
+        layers: list[CompositionLayer] = []
+        current_time = 0.0
+
+        for prepared, scene in zip(exec_plan.scenes, scene_plan.scenes):
+            if prepared.status != "ready":
+                continue
+            asset_id = f"scene_{prepared.index}"
+            layers.append(CompositionLayer(
+                type="video",
+                start=current_time,
+                end=current_time + scene.duration,
+                asset_id=asset_id,
+            ))
+            current_time += scene.duration
+
+        total_duration = current_time
+
+        for audio_entry in exec_plan.audio:
+            if audio_entry.status != "ready":
+                continue
+            volume = 0.8 if audio_entry.type == "music" else 1.0
+            layers.append(CompositionLayer(
+                type="audio",
+                start=0,
+                end=total_duration,
+                asset_id=audio_entry.type,
+                volume=volume,
+            ))
+
+        return Composition(
+            duration=total_duration,
+            resolution=[1080, 1920],
+            fps=30,
+            layers=layers,
+        )
+
+    def build_and_render(
+        self, composition: Composition, exec_plan: ExecutionPlan
+    ) -> str:
+        """Run FFmpeg assembler to produce the final video."""
+        asset_map: dict[str, str] = {}
+        for prepared in exec_plan.scenes:
+            if prepared.status == "ready" and prepared.output_path:
+                asset_map[f"scene_{prepared.index}"] = prepared.output_path
+        for audio_entry in exec_plan.audio:
+            if audio_entry.status == "ready" and audio_entry.output_path:
+                asset_map[audio_entry.type] = audio_entry.output_path
+
+        output_path = os.path.join(exec_plan.work_dir, "output.mp4")
+        return assembler_assemble(composition, asset_map, output_path)
+
+    async def post_process(self, output_path: str, job_id: str) -> str:
+        """POST-PROCESS phase: upload to S3 and return the key."""
+        bucket = os.environ.get("S3_BUCKET")
+        if not bucket:
+            logger.warning("S3_BUCKET not configured, skipping upload")
+            return output_path
+
+        s3_key = f"renders/{job_id}/output.mp4"
+        client = boto3.client(
+            "s3",
+            endpoint_url=os.environ.get("S3_ENDPOINT"),
+            aws_access_key_id=os.environ.get("S3_ACCESS_KEY"),
+            aws_secret_access_key=os.environ.get("S3_SECRET_KEY"),
+        )
+        client.upload_file(output_path, bucket, s3_key)
+        logger.info("Uploaded render to s3://%s/%s", bucket, s3_key)
+        return s3_key
+
+    async def produce(
+        self, brief: BriefRead, work_dir: str
+    ) -> tuple[str, Composition]:
+        """Run the full production pipeline.
+
+        PLAN -> PREPARE -> ASSEMBLE -> POST-PROCESS.
+
+        Returns (s3_key_or_path, composition).
+        """
+        exec_plan = self.plan(brief, work_dir)
+        scene_plan = ScenePlan(**brief.scene_plan)
+
+        exec_plan = await self.prepare(exec_plan, scene_plan)
+        composition = self.assemble(exec_plan, scene_plan)
+        output_path = self.build_and_render(composition, exec_plan)
+        s3_key = await self.post_process(output_path, str(brief.id))
+
+        return s3_key, composition

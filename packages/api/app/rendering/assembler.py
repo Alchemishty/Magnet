@@ -2,7 +2,7 @@
 
 import subprocess
 
-from app.schemas.composition import Composition, CompositionLayer
+from app.schemas.composition import Composition
 
 
 class AssemblerError(Exception):
@@ -27,10 +27,10 @@ def assemble(
     Raises:
         AssemblerError: If an asset is missing or FFmpeg fails.
     """
-    video_layers = [l for l in composition.layers if l.type == "video"]
-    audio_layers = [l for l in composition.layers if l.type == "audio"]
-    text_layers = [l for l in composition.layers if l.type == "text"]
-    image_layers = [l for l in composition.layers if l.type == "image"]
+    video_layers = [ly for ly in composition.layers if ly.type == "video"]
+    audio_layers = [ly for ly in composition.layers if ly.type == "audio"]
+    text_layers = [ly for ly in composition.layers if ly.type == "text"]
+    image_layers = [ly for ly in composition.layers if ly.type == "image"]
 
     cmd: list[str] = ["ffmpeg", "-y"]
     input_indices: dict[str, int] = {}
@@ -51,12 +51,13 @@ def assemble(
     width, height = composition.resolution
     filter_parts: list[str] = []
     current_video = None
-    video_stream_idx = 0
 
     if not video_layers and not image_layers:
         cmd.extend([
             "-f", "lavfi",
-            "-i", f"color=c=black:s={width}x{height}:d={composition.duration}:r={composition.fps}",
+            "-i",
+            f"color=c=black:s={width}x{height}"
+            f":d={composition.duration}:r={composition.fps}",
         ])
         current_video = f"[{idx}:v]"
         idx += 1

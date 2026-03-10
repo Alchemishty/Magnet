@@ -43,7 +43,7 @@ Create a pull request only after all quality gates pass.
 - Any known limitations or follow-up work needed
 
 ---
-Generated with [Agent Harness](https://github.com/owner/agent-harness)
+Generated with [Agent Harness](https://github.com/Alchemishty/agent-harness)
 ```
 
 ### Create PR

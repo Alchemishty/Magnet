@@ -1,7 +1,6 @@
 """Base template renderer with shared frame-to-video encoding."""
 
 import subprocess
-import tempfile
 from typing import Protocol
 
 from PIL import Image

@@ -1,6 +1,5 @@
 """Tests for the stub music provider."""
 
-import struct
 import wave
 from io import BytesIO
 
