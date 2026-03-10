@@ -29,8 +29,6 @@ class TestProcessRenderJob:
         update_calls = mock_repo.update.call_args_list
         statuses = [call[0][1]["status"] for call in update_calls]
         assert statuses == ["rendering", "done"]
-        rendering_data = update_calls[0][0][1]
-        assert "celery_task_id" in rendering_data
 
     @patch("app.tasks.render.SessionLocal")
     @patch("app.tasks.render.RenderJobRepository")
@@ -43,13 +41,18 @@ class TestProcessRenderJob:
         mock_repo.get_by_id.return_value = mock_job
         mock_repo.update.side_effect = [
             None,  # rendering update succeeds
-            RuntimeError("simulated failure"),
+            RuntimeError("simulated failure"),  # done update fails
+            None,  # failed status update succeeds
         ]
 
         from app.tasks.render import process_render_job
 
         with pytest.raises(RuntimeError):
             process_render_job(str(job_id))
+
+        failed_call = mock_repo.update.call_args_list[2]
+        assert failed_call[0][1]["status"] == "failed"
+        assert "simulated failure" in failed_call[0][1]["error_message"]
 
     @patch("app.tasks.render.SessionLocal")
     @patch("app.tasks.render.RenderJobRepository")

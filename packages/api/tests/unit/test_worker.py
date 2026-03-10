@@ -1,7 +1,11 @@
 """Unit tests for Celery worker configuration."""
 
+from importlib import reload
 from unittest.mock import patch
 
+import pytest
+
+import app.worker as worker_module
 from app.worker import celery_app
 
 
@@ -31,6 +35,11 @@ class TestCeleryAppConfig:
 
 
 class TestCeleryAppEnvOverrides:
+    @pytest.fixture(autouse=True)
+    def _restore_worker_module(self):
+        yield
+        reload(worker_module)
+
     @patch.dict(
         "os.environ",
         {
@@ -39,16 +48,9 @@ class TestCeleryAppEnvOverrides:
         },
     )
     def test_reads_broker_from_env(self):
-        from importlib import reload
-
-        import app.worker as worker_module
-
         reload(worker_module)
 
         assert worker_module.celery_app.conf.broker_url == "redis://custom:6379/0"
-
-        # Restore defaults
-        reload(worker_module)
 
     @patch.dict(
         "os.environ",
@@ -58,15 +60,8 @@ class TestCeleryAppEnvOverrides:
         },
     )
     def test_reads_backend_from_env(self):
-        from importlib import reload
-
-        import app.worker as worker_module
-
         reload(worker_module)
 
         assert (
             worker_module.celery_app.conf.result_backend == "redis://custom:6379/1"
         )
-
-        # Restore defaults
-        reload(worker_module)

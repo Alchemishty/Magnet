@@ -19,6 +19,7 @@ class JobService:
     """Orchestrates RenderJob business logic."""
 
     def __init__(self, session: Session):
+        self._session = session
         self._job_repo = RenderJobRepository(session)
         self._brief_repo = BriefRepository(session)
 
@@ -29,16 +30,22 @@ class JobService:
     ) -> RenderJob:
         """Create a render job after verifying the brief exists.
 
-        If dispatch_task is provided, dispatches the job for async processing.
-        Dispatch failures are logged but do not prevent job creation.
+        If dispatch_task is provided, commits the transaction so the worker
+        can see the job, then dispatches. Stores the Celery task ID on the
+        job from the AsyncResult. Dispatch failures are logged but do not
+        prevent job creation.
         """
         brief = self._brief_repo.get_by_id(data.brief_id)
         if brief is None:
             raise NotFoundError("CreativeBrief", data.brief_id)
         job = self._job_repo.create_from_schema(data)
         if dispatch_task is not None:
+            self._session.commit()
             try:
-                dispatch_task(str(job.id))
+                result = dispatch_task(str(job.id))
+                if result and hasattr(result, "id"):
+                    self._job_repo.update(job.id, {"celery_task_id": result.id})
+                    self._session.commit()
             except Exception:
                 logger.exception("Failed to dispatch task for job %s", job.id)
         return job

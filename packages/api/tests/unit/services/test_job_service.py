@@ -66,7 +66,7 @@ class TestCreateJob:
 
     @patch("app.services.job_service.BriefRepository")
     @patch("app.services.job_service.RenderJobRepository")
-    def test_calls_dispatch_task_with_job_id(
+    def test_commits_then_dispatches_with_job_id(
         self, mock_job_repo, mock_brief_repo, session
     ):
         brief_id = uuid4()
@@ -74,13 +74,39 @@ class TestCreateJob:
         expected_job = MagicMock(spec=RenderJob)
         expected_job.id = uuid4()
         mock_job_repo.return_value.create_from_schema.return_value = expected_job
-        dispatcher = MagicMock()
+        async_result = MagicMock()
+        async_result.id = "celery-task-123"
+        dispatcher = MagicMock(return_value=async_result)
 
         data = JobCreate(brief_id=brief_id)
         svc = JobService(session)
         svc.create_job(data, dispatch_task=dispatcher)
 
+        session.commit.assert_called()
         dispatcher.assert_called_once_with(str(expected_job.id))
+
+    @patch("app.services.job_service.BriefRepository")
+    @patch("app.services.job_service.RenderJobRepository")
+    def test_stores_celery_task_id_from_async_result(
+        self, mock_job_repo, mock_brief_repo, session
+    ):
+        brief_id = uuid4()
+        mock_brief_repo.return_value.get_by_id.return_value = MagicMock()
+        expected_job = MagicMock(spec=RenderJob)
+        expected_job.id = uuid4()
+        mock_repo = mock_job_repo.return_value
+        mock_repo.create_from_schema.return_value = expected_job
+        async_result = MagicMock()
+        async_result.id = "celery-task-456"
+        dispatcher = MagicMock(return_value=async_result)
+
+        data = JobCreate(brief_id=brief_id)
+        svc = JobService(session)
+        svc.create_job(data, dispatch_task=dispatcher)
+
+        mock_repo.update.assert_called_once_with(
+            expected_job.id, {"celery_task_id": "celery-task-456"}
+        )
 
     @patch("app.services.job_service.BriefRepository")
     @patch("app.services.job_service.RenderJobRepository")
@@ -114,6 +140,7 @@ class TestCreateJob:
         svc = JobService(session)
         result = svc.create_job(data, dispatch_task=dispatcher)
 
+        dispatcher.assert_called_once_with(str(expected_job.id))
         assert result is expected_job
 
 

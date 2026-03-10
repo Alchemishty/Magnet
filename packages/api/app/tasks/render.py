@@ -10,8 +10,8 @@ from app.worker import celery_app
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task(name="app.tasks.render.process_render_job", bind=True)
-def process_render_job(self, job_id: str) -> None:
+@celery_app.task(name="app.tasks.render.process_render_job")
+def process_render_job(job_id: str) -> None:
     """Process a render job asynchronously.
 
     Updates job status through the lifecycle: queued -> rendering -> done.
@@ -24,10 +24,7 @@ def process_render_job(self, job_id: str) -> None:
         if job is None:
             raise ValueError(f"RenderJob {job_id} not found")
 
-        repo.update(UUID(job_id), {
-            "status": "rendering",
-            "celery_task_id": self.request.id,
-        })
+        repo.update(UUID(job_id), {"status": "rendering"})
         session.commit()
 
         logger.info("Processing render job %s (pipeline placeholder)", job_id)

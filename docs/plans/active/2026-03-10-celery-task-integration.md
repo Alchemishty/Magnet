@@ -12,8 +12,8 @@
 - Import direction: tasks import from services/repositories, not the other way around
 
 ## Open Questions
-- Should the Celery task ID be stored on the RenderJob model for correlation? (Useful for task revocation later, but adds a column now)
-- Should we add a `celery_task_id` field to `JobRead` schema so clients can see it?
+- ~~Should the Celery task ID be stored on the RenderJob model?~~ **Resolved: Yes.** Added `celery_task_id` column, stored at dispatch time from AsyncResult.
+- ~~Should we add a `celery_task_id` field to `JobRead` schema?~~ **Resolved: Yes.** Exposed in both `JobRead` and `JobUpdate`.
 
 ## Context and Orientation
 - **Files to read before starting:** `app/worker.py`, `app/tasks/__init__.py`, `app/services/job_service.py`, `app/routes/jobs.py`, `app/models/job.py`, `app/schemas/job.py`, `app/db.py`, `app/errors.py`
