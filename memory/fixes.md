@@ -20,3 +20,17 @@ New files get formatted but existing files may not match. Running `ruff format .
 
 - **Context:** After merging any feature branch
 - **Source:** 2026-03-10, 47 files needed reformatting after LLM provider merge
+
+## str(Exception) vs str(exc) — class vs instance
+
+`str(Exception)` converts the Exception *class* to string (giving `"<class 'Exception'>">`), not the error message. Always use `except Exception as exc:` and then `str(exc)` to get the actual error message.
+
+- **Context:** Any error handler that logs or stores exception messages
+- **Source:** 2026-03-10 Celery task integration, caught during deslop
+
+## patch.dict scope vs module reload for env var tests
+
+`@patch.dict("os.environ", {...})` restores the env only *after* the test method returns. A `reload(module)` inside the test runs while the patch is active. To restore the module to default config after the test, use a `pytest.fixture(autouse=True)` with `yield` + `reload()` in the teardown — this runs after the patch.dict decorator has cleaned up.
+
+- **Context:** Tests that reload modules to verify env-based configuration
+- **Source:** CodeRabbit review on PR #7 (2026-03-10)
