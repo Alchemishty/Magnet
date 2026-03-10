@@ -39,7 +39,11 @@ def get_concept_service(
 def get_asset_service(
     db: Session = Depends(get_db),
 ) -> Generator[AssetService, None, None]:
-    yield AssetService(db)
+    try:
+        s3 = _get_s3_client()
+    except ValueError:
+        s3 = None
+    yield AssetService(db, s3_client=s3)
 
 
 def get_job_service(

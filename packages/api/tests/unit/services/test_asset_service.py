@@ -143,3 +143,38 @@ class TestDeleteAsset:
 
         assert exc_info.value.entity_name == "Asset"
         assert exc_info.value.entity_id == asset_id
+
+    def test_deletes_s3_object_when_client_provided(
+        self, session, asset_repo, project_repo
+    ):
+        s3 = MagicMock()
+        svc = AssetService(session, s3_client=s3)
+        asset_id = uuid4()
+        asset = MagicMock(s3_key="uploads/file.mp4")
+        asset_repo.get_by_id.return_value = asset
+        asset_repo.delete.return_value = True
+
+        svc.delete_asset(asset_id)
+
+        s3.delete_object.assert_called_once_with("uploads/file.mp4")
+
+    def test_delete_works_without_s3_client(self, service, asset_repo):
+        asset_id = uuid4()
+        asset_repo.delete.return_value = True
+
+        service.delete_asset(asset_id)
+
+        asset_repo.delete.assert_called_once_with(asset_id)
+
+    def test_s3_failure_does_not_raise(self, session, asset_repo, project_repo):
+        from app.errors import StorageError
+
+        s3 = MagicMock()
+        s3.delete_object.side_effect = StorageError("fail")
+        svc = AssetService(session, s3_client=s3)
+        asset_id = uuid4()
+        asset = MagicMock(s3_key="uploads/file.mp4")
+        asset_repo.get_by_id.return_value = asset
+        asset_repo.delete.return_value = True
+
+        svc.delete_asset(asset_id)
