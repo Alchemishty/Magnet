@@ -12,7 +12,7 @@
 ## Open Questions
 (All resolved)
 - ~~Subscribe per-job or per-brief?~~ **Per-brief.** A single WebSocket at `/ws/briefs/{brief_id}/progress` subscribes to all jobs for that brief. Workers publish to `progress:brief:{brief_id}` so one subscription covers all jobs.
-- ~~Percentage estimates or phase transitions only?~~ **Both.** Include a `progress_pct: int | None` (0-100) field on events. Workers publish percentage estimates at key phases (e.g., PLAN=10, PREPARE=40, ASSEMBLE=70, POST-PROCESS=90, done=100).
+- ~~Percentage estimates or phase transitions only?~~ **MVP uses lifecycle percentages.** Include a `progress_pct: int | None` (0-100) field on events. Current implementation publishes `rendering=5` and `done=100`. Intermediate phase milestones (PLAN=10, PREPARE=40, ASSEMBLE=70, POST-PROCESS=90) are deferred until the VideoAgent exposes a progress callback interface.
 - ~~Auth on WebSocket?~~ **Deferred.** No auth for MVP; add in a later phase.
 
 ## Context and Orientation
@@ -56,7 +56,7 @@
 **Tests:** `packages/api/tests/unit/tasks/test_render.py`
 **What to do:** Modify `process_render_job` to publish progress events at key lifecycle points. Each event includes `job_id`, `brief_id` (read from the job record), and `progress_pct`:
 - After setting status to "rendering": publish `status="rendering", progress_pct=5, message="Render job started"`.
-- Phase updates (published by the Video Agent callback — for now, hardcode in task): PLAN=10, PREPARE=40, ASSEMBLE=70, POST-PROCESS=90.
+- Intermediate phase updates (PLAN=10, PREPARE=40, ASSEMBLE=70, POST-PROCESS=90) are deferred until the VideoAgent exposes a progress callback.
 - After completion: publish `status="done", progress_pct=100, message="Render complete"`.
 - On failure: publish `status="failed", progress_pct=None, message=str(exc)`.
 - Create the `RedisClient` inside the task using the factory function. If Redis is unavailable, log a warning and skip publishing (progress is best-effort). Wrap all publish calls in try/except so a Redis failure never breaks the render pipeline.

@@ -56,15 +56,20 @@ class TestRedisClient:
             "app.repositories.redis_client.async_redis.from_url",
             return_value=mock_async_redis,
         ):
-            async for msg in client.subscribe("test-channel"):
-                received.append(msg)
-                if len(received) >= 2:
-                    break
+            stream = client.subscribe("test-channel")
+            try:
+                received.append(await stream.__anext__())
+                received.append(await stream.__anext__())
+            finally:
+                await stream.aclose()
 
         assert received == [
             '{"status": "rendering"}',
             '{"status": "done"}',
         ]
+        mock_pubsub.unsubscribe.assert_awaited_once()
+        mock_pubsub.aclose.assert_awaited_once()
+        mock_async_redis.aclose.assert_awaited_once()
 
     def test_close_calls_redis_close(self):
         mock_redis = MagicMock()
