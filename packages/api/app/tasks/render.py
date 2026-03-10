@@ -30,18 +30,17 @@ def process_render_job(self, job_id: str) -> None:
         })
         session.commit()
 
-        # Placeholder for actual rendering pipeline
-        logger.info("Processing render job %s", job_id)
+        logger.info("Processing render job %s (pipeline placeholder)", job_id)
 
         repo.update(UUID(job_id), {"status": "done"})
         session.commit()
-    except Exception:
+    except Exception as exc:
         session.rollback()
         try:
             repo = RenderJobRepository(session)
             repo.update(UUID(job_id), {
                 "status": "failed",
-                "error_message": str(Exception),
+                "error_message": str(exc),
             })
             session.commit()
         except Exception:
