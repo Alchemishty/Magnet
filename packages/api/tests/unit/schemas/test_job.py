@@ -43,6 +43,11 @@ class TestJobUpdate:
 
         assert schema.status == "rendering"
 
+    def test_celery_task_id_update(self):
+        schema = JobUpdate(celery_task_id="abc-123")
+
+        assert schema.celery_task_id == "abc-123"
+
     def test_rejects_invalid_status(self):
         with pytest.raises(ValidationError):
             JobUpdate(status="broken")

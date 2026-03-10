@@ -26,6 +26,7 @@ class RenderJob(BaseModel):
     output_s3_key: Mapped[str | None] = mapped_column(String(500))
     render_duration_ms: Mapped[int | None] = mapped_column(Integer)
     error_message: Mapped[str | None] = mapped_column(Text)
+    celery_task_id: Mapped[str | None] = mapped_column(String(255))
 
     brief: Mapped[CreativeBrief] = relationship(back_populates="render_jobs")
 

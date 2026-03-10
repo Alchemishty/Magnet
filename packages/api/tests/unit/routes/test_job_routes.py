@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.errors import NotFoundError
-from app.routes.dependencies import get_job_service
+from app.routes.dependencies import get_job_service, get_task_dispatcher
 from app.routes.jobs import router
 
 
@@ -22,6 +22,7 @@ def _make_job(**overrides):
         "output_s3_key": None,
         "render_duration_ms": None,
         "error_message": None,
+        "celery_task_id": None,
         "created_at": datetime.now(timezone.utc),
         "updated_at": None,
     }
@@ -38,10 +39,16 @@ def mock_service():
 
 
 @pytest.fixture()
-def client(mock_service):
+def mock_dispatcher():
+    return MagicMock()
+
+
+@pytest.fixture()
+def client(mock_service, mock_dispatcher):
     test_app = FastAPI()
     test_app.include_router(router)
     test_app.dependency_overrides[get_job_service] = lambda: mock_service
+    test_app.dependency_overrides[get_task_dispatcher] = lambda: mock_dispatcher
     return TestClient(test_app)
 
 
@@ -88,6 +95,21 @@ class TestCreateJob:
         )
 
         assert resp.status_code == 404
+
+    def test_passes_dispatcher_to_service(
+        self, client, mock_service, mock_dispatcher
+    ):
+        brief_id = uuid4()
+        job = _make_job(brief_id=brief_id)
+        mock_service.create_job.return_value = job
+
+        client.post(
+            f"/api/briefs/{brief_id}/jobs",
+            json={"status": "queued"},
+        )
+
+        call_kwargs = mock_service.create_job.call_args[1]
+        assert call_kwargs["dispatch_task"] is mock_dispatcher
 
 
 # ── GET /api/briefs/{brief_id}/jobs ──────────────────────────────
