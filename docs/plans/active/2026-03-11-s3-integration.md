@@ -19,7 +19,7 @@
 
 ## Steps
 
-### Step 1: Create S3Client class
+### Step 1: [DONE] Create S3Client class
 **Files:** `packages/api/app/repositories/s3_client.py`
 **Tests:** `packages/api/tests/unit/repositories/test_s3_client.py`
 **What to do:** Create `S3Client` with these methods:
@@ -38,7 +38,7 @@ Add `StorageError` to `app/errors.py` for wrapping boto3 exceptions at the bound
 Tests: mock `boto3.client` and verify each method calls the right boto3 API. Test `_ensure_bucket()` handles both "bucket exists" and "bucket doesn't exist" cases. Test factory raises `ValueError` when env vars missing.
 **Verify:** `cd packages/api && pytest tests/unit/repositories/test_s3_client.py -x`
 
-### Step 2: Add presigned URL schemas
+### Step 2: [DONE] Add presigned URL schemas
 **Files:** `packages/api/app/schemas/asset.py`
 **Tests:** `packages/api/tests/unit/schemas/test_asset.py`
 **What to do:** Add two new Pydantic models:
@@ -48,7 +48,7 @@ Tests: mock `boto3.client` and verify each method calls the right boto3 API. Tes
 Tests: validate schema creation and serialization.
 **Verify:** `cd packages/api && pytest tests/unit/schemas/test_asset.py -x`
 
-### Step 3: Add presigned URL endpoints to asset routes
+### Step 3: [DONE] Add presigned URL endpoints to asset routes
 **Files:** `packages/api/app/routes/assets.py`, `packages/api/app/routes/dependencies.py`
 **Tests:** `packages/api/tests/unit/routes/test_asset_routes.py`
 **What to do:**
@@ -61,7 +61,7 @@ Tests: validate schema creation and serialization.
 Tests: mock `S3Client` and `AssetService`, verify endpoints return correct response shapes and status codes. Test 404 for missing asset on download-url. Test 500 when S3 config is missing.
 **Verify:** `cd packages/api && pytest tests/unit/routes/test_asset_routes.py -x`
 
-### Step 4: Wire S3 cleanup into asset deletion
+### Step 4: [DONE] Wire S3 cleanup into asset deletion
 **Files:** `packages/api/app/services/asset_service.py`
 **Tests:** `packages/api/tests/unit/services/test_asset_service.py`
 **What to do:**
@@ -72,7 +72,7 @@ Tests: mock `S3Client` and `AssetService`, verify endpoints return correct respo
 Tests: verify delete calls `s3_client.delete_object()` with the asset's s3_key. Verify delete still works when s3_client is None. Verify S3 failure doesn't raise (logs warning instead).
 **Verify:** `cd packages/api && pytest tests/unit/services/test_asset_service.py -x`
 
-### Step 5: Wire S3 download into Video Agent COMPOSE
+### Step 5: [DONE] Wire S3 download into Video Agent COMPOSE
 **Files:** `packages/api/app/agents/video_agent.py`
 **Tests:** `packages/api/tests/unit/agents/test_video_agent_prepare.py`
 **What to do:**
@@ -84,7 +84,7 @@ Tests: verify delete calls `s3_client.delete_object()` with the asset's s3_key. 
 Tests: mock `S3Client` and verify `_prepare_compose` calls `download_file`. Verify `post_process` calls `upload_file` via S3Client. Verify fallback when s3_client is None.
 **Verify:** `cd packages/api && pytest tests/unit/agents/ -x`
 
-### Step 6: Update dependencies and Celery task wiring
+### Step 6: [DONE] Update dependencies and Celery task wiring
 **Files:** `packages/api/app/routes/dependencies.py`, `packages/api/app/tasks/render.py`
 **Tests:** `packages/api/tests/unit/routes/test_job_routes.py`
 **What to do:**
