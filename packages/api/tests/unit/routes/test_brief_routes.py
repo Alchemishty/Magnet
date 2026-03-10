@@ -1,20 +1,28 @@
 """Unit tests for brief routes."""
 
 from datetime import datetime, timezone
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.errors import DatabaseError, NotFoundError
+from app.agents.concept_agent import ConceptAgentError
+from app.errors import (
+    DatabaseError,
+    ExternalProviderError,
+    NotFoundError,
+    ValidationError,
+)
 from app.routes.briefs import router
-from app.routes.dependencies import get_brief_service, get_concept_service
+from app.routes.dependencies import (
+    get_brief_service,
+    get_concept_agent,
+    get_concept_service,
+)
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+#Helpers
 
 
 def _make_brief(**overrides):
@@ -44,9 +52,7 @@ def _make_brief(**overrides):
     return obj
 
 
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
+#Fixtures
 
 
 @pytest.fixture()
@@ -56,23 +62,25 @@ def mock_brief_service():
 
 @pytest.fixture()
 def mock_concept_service():
+    return AsyncMock()
+
+
+@pytest.fixture()
+def mock_concept_agent():
     return MagicMock()
 
 
 @pytest.fixture()
-def client(mock_brief_service, mock_concept_service):
+def client(mock_brief_service, mock_concept_service, mock_concept_agent):
     test_app = FastAPI()
     test_app.include_router(router)
     test_app.dependency_overrides[get_brief_service] = lambda: mock_brief_service
-    test_app.dependency_overrides[get_concept_service] = (
-        lambda: mock_concept_service
-    )
+    test_app.dependency_overrides[get_concept_service] = lambda: mock_concept_service
+    test_app.dependency_overrides[get_concept_agent] = lambda: mock_concept_agent
     return TestClient(test_app)
 
 
-# ---------------------------------------------------------------------------
-# GET /api/projects/{project_id}/briefs
-# ---------------------------------------------------------------------------
+#GET /api/projects/{project_id}/briefs
 
 
 class TestListBriefs:
@@ -86,9 +94,7 @@ class TestListBriefs:
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 3
-        mock_brief_service.list_briefs.assert_called_once_with(
-            project_id, None, 0, 100
-        )
+        mock_brief_service.list_briefs.assert_called_once_with(project_id, None, 0, 100)
 
     def test_passes_query_params(self, client, mock_brief_service):
         project_id = uuid4()
@@ -117,21 +123,73 @@ class TestListBriefs:
         assert resp.json()["detail"] == "db down"
 
 
-# ---------------------------------------------------------------------------
-# POST /api/projects/{project_id}/concepts
-# ---------------------------------------------------------------------------
+#POST /api/projects/{project_id}/concepts
 
 
 class TestGenerateConcepts:
-    def test_returns_501_not_configured(self, client):
+    def test_returns_briefs(self, client, mock_concept_service):
+        project_id = uuid4()
+        briefs = [_make_brief(project_id=project_id) for _ in range(3)]
+        mock_concept_service.generate_concepts.return_value = briefs
+
+        resp = client.post(f"/api/projects/{project_id}/concepts")
+
+        assert resp.status_code == 201
+        assert len(resp.json()) == 3
+        mock_concept_service.generate_concepts.assert_called_once()
+
+    def test_not_found_returns_404(self, client, mock_concept_service):
+        project_id = uuid4()
+        mock_concept_service.generate_concepts.side_effect = NotFoundError(
+            "GameProfile", project_id
+        )
+
+        resp = client.post(f"/api/projects/{project_id}/concepts")
+
+        assert resp.status_code == 404
+
+    def test_validation_error_returns_422(self, client, mock_concept_service):
+        mock_concept_service.generate_concepts.side_effect = ValidationError(
+            "GameProfile requires genre"
+        )
+
         resp = client.post(f"/api/projects/{uuid4()}/concepts")
-        assert resp.status_code == 501
-        assert "LLM provider not configured" in resp.json()["detail"]
+
+        assert resp.status_code == 422
+
+    def test_external_provider_error_returns_502(self, client, mock_concept_service):
+        mock_concept_service.generate_concepts.side_effect = ExternalProviderError(
+            "claude", "rate limited"
+        )
+
+        resp = client.post(f"/api/projects/{uuid4()}/concepts")
+
+        assert resp.status_code == 502
+        assert "claude" in resp.json()["detail"]
+
+    def test_concept_agent_error_returns_502(self, client, mock_concept_service):
+        mock_concept_service.generate_concepts.side_effect = ConceptAgentError(
+            "malformed response"
+        )
+
+        resp = client.post(f"/api/projects/{uuid4()}/concepts")
+
+        assert resp.status_code == 502
+
+    def test_value_error_returns_500_config_error(
+        self, client, mock_concept_service
+    ):
+        mock_concept_service.generate_concepts.side_effect = ValueError(
+            "ANTHROPIC_API_KEY environment variable is required"
+        )
+
+        resp = client.post(f"/api/projects/{uuid4()}/concepts")
+
+        assert resp.status_code == 500
+        assert "LLM configuration error" in resp.json()["detail"]
 
 
-# ---------------------------------------------------------------------------
-# GET /api/briefs/{brief_id}
-# ---------------------------------------------------------------------------
+#GET /api/briefs/{brief_id}
 
 
 class TestGetBrief:
@@ -163,9 +221,7 @@ class TestGetBrief:
         assert resp.status_code == 500
 
 
-# ---------------------------------------------------------------------------
-# PATCH /api/briefs/{brief_id}
-# ---------------------------------------------------------------------------
+#PATCH /api/briefs/{brief_id}
 
 
 class TestUpdateBrief:
@@ -204,9 +260,7 @@ class TestUpdateBrief:
         assert resp.status_code == 500
 
 
-# ---------------------------------------------------------------------------
-# DELETE /api/briefs/{brief_id}
-# ---------------------------------------------------------------------------
+#DELETE /api/briefs/{brief_id}
 
 
 class TestDeleteBrief:
