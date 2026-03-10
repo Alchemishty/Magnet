@@ -5,6 +5,7 @@ import { useBriefProgress } from "../../lib/useBriefProgress";
 
 class MockWebSocket {
   static instances: MockWebSocket[] = [];
+  static suppressAutoOpen = false;
   url: string;
   onopen: (() => void) | null = null;
   onmessage: ((event: { data: string }) => void) | null = null;
@@ -16,10 +17,12 @@ class MockWebSocket {
   constructor(url: string) {
     this.url = url;
     MockWebSocket.instances.push(this);
-    setTimeout(() => {
-      this.readyState = 1;
-      this.onopen?.();
-    }, 0);
+    if (!MockWebSocket.suppressAutoOpen) {
+      setTimeout(() => {
+        this.readyState = 1;
+        this.onopen?.();
+      }, 0);
+    }
   }
 
   close() {
@@ -152,5 +155,41 @@ describe("useBriefProgress", () => {
 
     unmount();
     expect(MockWebSocket.instances[0].closeCalled).toBe(true);
+  });
+
+  it("retries with backoff on disconnect, up to max retries", async () => {
+    vi.useFakeTimers();
+    const briefId = "abc-123";
+    renderHook(() => useBriefProgress(briefId));
+
+    // Initial connection fires onopen via setTimeout(0)
+    await act(async () => { vi.advanceTimersByTime(0); });
+    expect(MockWebSocket.instances).toHaveLength(1);
+
+    // Suppress auto-open for retries so onopen doesn't reset counter
+    MockWebSocket.suppressAutoOpen = true;
+
+    // Disconnect — retry #1 after 1s
+    await act(async () => MockWebSocket.instances[0].onclose?.());
+    await act(async () => { vi.advanceTimersByTime(1000); });
+    expect(MockWebSocket.instances).toHaveLength(2);
+
+    // Disconnect — retry #2 after 2s
+    await act(async () => MockWebSocket.instances[1].onclose?.());
+    await act(async () => { vi.advanceTimersByTime(2000); });
+    expect(MockWebSocket.instances).toHaveLength(3);
+
+    // Disconnect — retry #3 after 4s
+    await act(async () => MockWebSocket.instances[2].onclose?.());
+    await act(async () => { vi.advanceTimersByTime(4000); });
+    expect(MockWebSocket.instances).toHaveLength(4);
+
+    // Disconnect — no more retries (max 3 reached)
+    await act(async () => MockWebSocket.instances[3].onclose?.());
+    await act(async () => { vi.advanceTimersByTime(10000); });
+    expect(MockWebSocket.instances).toHaveLength(4);
+
+    MockWebSocket.suppressAutoOpen = false;
+    vi.useRealTimers();
   });
 });
