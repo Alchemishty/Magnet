@@ -1,6 +1,5 @@
 """Tests for Redis pub/sub client."""
 
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -56,7 +55,7 @@ class TestRedisClient:
         with patch(
             "app.repositories.redis_client.async_redis.from_url",
             return_value=mock_async_redis,
-        ) as mock_from:
+        ):
             async for msg in client.subscribe("test-channel"):
                 received.append(msg)
                 if len(received) >= 2:
