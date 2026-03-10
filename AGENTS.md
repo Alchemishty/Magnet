@@ -7,7 +7,7 @@ Magnet is an agentic AI platform for mobile game user acquisition (UA) creative 
 | Topic | Doc |
 |-------|-----|
 | Architecture & data flow | [docs/architecture.md](docs/architecture.md) |
-| Coding conventions | [docs/conventions.md](docs/conventions.md) |
+| Coding conventions | [docs/conventions/](docs/conventions/index.md) |
 | Domain concepts & glossary | [docs/domain.md](docs/domain.md) |
 | Testing strategy | [docs/testing.md](docs/testing.md) |
 | Active plans | [docs/plans/active/](docs/plans/active/) |
@@ -91,7 +91,7 @@ Hybrid monorepo: Python backend (FastAPI + Celery) handles API, agentic pipeline
 4. **Import direction enforced** — API: models → schemas → repositories → services → agents → routes
 5. **Package-namespaced commands** — always prefix with `api.` or `web.` in harness.yaml
 
-See [docs/conventions.md](docs/conventions.md) for the complete guide.
+See [docs/conventions/](docs/conventions/index.md) for the complete guide.
 
 ## Domain Concepts
 

@@ -11,7 +11,7 @@ while IFS= read -r file; do
         echo "ERROR: file-size-limit"
         echo "  ${file} has ${LINES} lines (max ${MAX_LINES})"
         echo "  FIX: Split into smaller, focused modules. One file = one concept."
-        echo "  REFERENCE: docs/conventions.md#code-smells"
+        echo "  REFERENCE: docs/conventions/serialization-and-quality.md"
         echo ""
         VIOLATIONS=1
     fi

@@ -60,7 +60,7 @@ platforms:
 docs:
   root: "docs/"
   architecture: "docs/architecture.md"
-  conventions: "docs/conventions.md"
+  conventions: "docs/conventions/index.md"
   domain: "docs/domain.md"
   testing: "docs/testing.md"
   plans_active: "docs/plans/active/"

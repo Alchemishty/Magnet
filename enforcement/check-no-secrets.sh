@@ -24,7 +24,7 @@ while IFS= read -r file; do
             echo "ERROR: no-secrets-in-code"
             echo "  ${file}:${line_num} matches pattern: $(echo "$match" | cut -d: -f2-)"
             echo "  FIX: Move to environment variable. Use os.environ['KEY'] (Python) or process.env.KEY (TypeScript)."
-            echo "  REFERENCE: docs/conventions.md#naming-conventions"
+            echo "  REFERENCE: docs/conventions/naming.md"
             echo ""
         done <<< "$matches"
         VIOLATIONS=1

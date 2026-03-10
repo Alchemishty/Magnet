@@ -23,7 +23,7 @@
 **Alternatives considered:** None — these were selected during initial project setup based on project requirements and the design document.
 
 **Consequences:**
-- All future code must follow the conventions established in docs/conventions.md.
+- All future code must follow the conventions established in docs/conventions/.
 - Architectural layer boundaries are enforced via import direction rules (separate for Python and TypeScript).
 - Provider-agnostic interfaces required for all external services.
 - These choices can be revisited by creating a new decision record that supersedes this one.
