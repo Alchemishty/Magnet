@@ -12,12 +12,13 @@ from app.schemas.execution_plan import ExecutionPlan, PreparedAudio, PreparedSce
 from app.schemas.scene_plan import Scene, ScenePlan
 
 
-def _make_agent():
+def _make_agent(s3_client=None):
     return VideoAgent(
         tts_provider=MagicMock(),
         music_provider=MagicMock(),
         image_provider=MagicMock(),
         asset_repo=MagicMock(),
+        s3_client=s3_client,
     )
 
 
@@ -135,52 +136,45 @@ class TestBuildAndRender:
 
 class TestPostProcess:
     @pytest.mark.asyncio
-    @patch("app.agents.video_agent.boto3")
-    async def test_uploads_to_s3(self, mock_boto3):
-        mock_client = MagicMock()
-        mock_boto3.client.return_value = mock_client
+    async def test_uploads_to_s3_via_client(self):
+        mock_s3 = MagicMock()
+        mock_s3.upload_file.return_value = "renders/job-123/output.mp4"
 
-        agent = _make_agent()
+        agent = _make_agent(s3_client=mock_s3)
         work_dir = tempfile.mkdtemp()
         output_path = os.path.join(work_dir, "output.mp4")
         with open(output_path, "wb") as f:
             f.write(b"fake_video")
 
-        with patch.dict("os.environ", {
-            "S3_ENDPOINT": "http://localhost:9000",
-            "S3_ACCESS_KEY": "key",
-            "S3_SECRET_KEY": "secret",
-            "S3_BUCKET": "magnet-assets",
-        }):
-            s3_key = await agent.post_process(output_path, "job-123")
+        s3_key = await agent.post_process(output_path, "job-123")
 
         assert s3_key == "renders/job-123/output.mp4"
-        mock_client.upload_file.assert_called_once()
+        mock_s3.upload_file.assert_called_once_with(
+            output_path, "renders/job-123/output.mp4"
+        )
 
     @pytest.mark.asyncio
-    async def test_returns_local_path_when_s3_not_configured(self):
-        agent = _make_agent()
+    async def test_returns_local_path_when_no_s3_client(self):
+        agent = _make_agent(s3_client=None)
         work_dir = tempfile.mkdtemp()
         output_path = os.path.join(work_dir, "output.mp4")
         with open(output_path, "wb") as f:
             f.write(b"fake_video")
 
-        with patch.dict("os.environ", {}, clear=True):
-            os.environ.pop("S3_BUCKET", None)
-            result = await agent.post_process(output_path, "job-456")
+        result = await agent.post_process(output_path, "job-456")
 
         assert result == output_path
 
 
 class TestProduce:
     @pytest.mark.asyncio
-    @patch("app.agents.video_agent.boto3")
     @patch("app.agents.video_agent.assembler_assemble")
-    async def test_full_pipeline(self, mock_assemble, mock_boto3):
+    async def test_full_pipeline(self, mock_assemble):
         mock_assemble.return_value = "/tmp/work/output.mp4"
-        mock_boto3.client.return_value = MagicMock()
+        mock_s3 = MagicMock()
+        mock_s3.upload_file.return_value = "renders/key/output.mp4"
 
-        agent = _make_agent()
+        agent = _make_agent(s3_client=mock_s3)
         agent._image.generate = AsyncMock(return_value=b"image_data")
         agent._asset_repo.list_by_project.return_value = []
 
@@ -190,20 +184,13 @@ class TestProduce:
         brief.project_id = uuid4()
         brief.scene_plan = {
             "scenes": [
-                {"strategy": "GENERATE", "type": "hook", "duration": 3.0,
-                 "prompt": "shocked face"},
+                {"strategy": "GENERATE", "type": "hook",
+                 "duration": 3.0, "prompt": "shocked face"},
             ],
         }
 
         work_dir = tempfile.mkdtemp()
-
-        with patch.dict("os.environ", {
-            "S3_ENDPOINT": "http://localhost:9000",
-            "S3_ACCESS_KEY": "key",
-            "S3_SECRET_KEY": "secret",
-            "S3_BUCKET": "magnet-assets",
-        }):
-            s3_key, composition = await agent.produce(brief, work_dir)
+        s3_key, composition = await agent.produce(brief, work_dir)
 
         assert s3_key is not None
         assert composition is not None
