@@ -27,6 +27,9 @@ class ClaudeProvider:
             timeout=120.0,
         )
 
+    async def aclose(self) -> None:
+        await self._client.aclose()
+
     async def generate(self, messages: list[dict], schema: dict | None = None) -> dict:
         system = None
         filtered: list[dict] = []

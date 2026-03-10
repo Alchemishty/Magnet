@@ -1,6 +1,6 @@
 """FastAPI dependency functions for injecting services."""
 
-from collections.abc import Generator
+from collections.abc import AsyncGenerator, Generator
 
 from fastapi import Depends
 from sqlalchemy.orm import Session
@@ -45,11 +45,15 @@ def get_job_service(
     yield JobService(db)
 
 
-def get_llm_provider() -> Generator:
-    yield _get_llm_provider()
+async def get_llm_provider() -> AsyncGenerator:
+    provider = _get_llm_provider()
+    try:
+        yield provider
+    finally:
+        await provider.aclose()
 
 
-def get_concept_agent(
+async def get_concept_agent(
     llm=Depends(get_llm_provider),
-) -> Generator[ConceptAgent, None, None]:
+) -> AsyncGenerator[ConceptAgent, None]:
     yield ConceptAgent(llm=llm)

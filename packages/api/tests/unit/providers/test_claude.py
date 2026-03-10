@@ -56,6 +56,15 @@ class TestClaudeProviderInit:
         assert headers["anthropic-version"] == "2023-06-01"
 
 
+class TestClaudeProviderLifecycle:
+    async def test_aclose_closes_client(self, provider):
+        with patch.object(
+            provider._client, "aclose", new_callable=AsyncMock
+        ) as mock_close:
+            await provider.aclose()
+            mock_close.assert_called_once()
+
+
 class TestClaudeProviderGenerate:
     async def test_without_schema_parses_text_response(self, provider):
         expected = {"directions": [{"hook_type": "Fail"}]}

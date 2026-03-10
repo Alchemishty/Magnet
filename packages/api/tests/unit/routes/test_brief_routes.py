@@ -184,6 +184,18 @@ class TestGenerateConcepts:
 
         assert resp.status_code == 502
 
+    def test_value_error_returns_500_config_error(
+        self, client, mock_concept_service
+    ):
+        mock_concept_service.generate_concepts.side_effect = ValueError(
+            "ANTHROPIC_API_KEY environment variable is required"
+        )
+
+        resp = client.post(f"/api/projects/{uuid4()}/concepts")
+
+        assert resp.status_code == 500
+        assert "LLM configuration error" in resp.json()["detail"]
+
 
 # ---------------------------------------------------------------------------
 # GET /api/briefs/{brief_id}

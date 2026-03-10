@@ -45,6 +45,15 @@ class TestOpenAIProviderInit:
         assert headers["authorization"] == "Bearer test-key"
 
 
+class TestOpenAIProviderLifecycle:
+    async def test_aclose_closes_client(self, provider):
+        with patch.object(
+            provider._client, "aclose", new_callable=AsyncMock
+        ) as mock_close:
+            await provider.aclose()
+            mock_close.assert_called_once()
+
+
 class TestOpenAIProviderGenerate:
     async def test_without_schema_returns_parsed_json(self, provider):
         expected = {"directions": [{"hook_type": "Fail"}]}

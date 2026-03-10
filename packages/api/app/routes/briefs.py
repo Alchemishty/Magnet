@@ -64,6 +64,10 @@ async def generate_concepts(
         raise HTTPException(status_code=502, detail=str(e))
     except ConceptAgentError as e:
         raise HTTPException(status_code=502, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(
+            status_code=500, detail=f"LLM configuration error: {e}"
+        )
 
 
 @router.get(
