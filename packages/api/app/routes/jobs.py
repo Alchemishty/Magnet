@@ -1,11 +1,12 @@
 """Routes for RenderJob operations."""
 
+from collections.abc import Callable
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.errors import DatabaseError, NotFoundError
-from app.routes.dependencies import get_job_service
+from app.routes.dependencies import get_job_service, get_task_dispatcher
 from app.schemas.job import (
     JobCreate,
     JobCreateBody,
@@ -27,11 +28,12 @@ def create_job(
     brief_id: UUID,
     body: JobCreateBody,
     service: JobService = Depends(get_job_service),
+    dispatch_task: Callable[[str], object] = Depends(get_task_dispatcher),
 ) -> JobRead:
-    """Create a render job for a brief."""
+    """Create a render job for a brief and dispatch for async processing."""
     data = JobCreate(brief_id=brief_id, **body.model_dump())
     try:
-        job = service.create_job(data)
+        job = service.create_job(data, dispatch_task=dispatch_task)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=e.message)
     except DatabaseError as e:
