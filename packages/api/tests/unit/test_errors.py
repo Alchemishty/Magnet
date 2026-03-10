@@ -1,6 +1,11 @@
 """Tests for domain error classes."""
 
-from app.errors import DatabaseError, NotFoundError, ValidationError
+from app.errors import (
+    DatabaseError,
+    ExternalProviderError,
+    NotFoundError,
+    ValidationError,
+)
 
 
 class TestNotFoundError:
@@ -32,4 +37,20 @@ class TestValidationError:
 
     def test_is_exception(self):
         err = ValidationError("bad input")
+        assert isinstance(err, Exception)
+
+
+class TestExternalProviderError:
+    def test_attributes(self):
+        err = ExternalProviderError("claude", "rate limit exceeded")
+        assert err.provider_name == "claude"
+        assert err.message == "rate limit exceeded"
+
+    def test_message_includes_provider_and_detail(self):
+        err = ExternalProviderError("openai", "timeout")
+        assert "openai" in str(err)
+        assert "timeout" in str(err)
+
+    def test_is_exception(self):
+        err = ExternalProviderError("claude", "error")
         assert isinstance(err, Exception)

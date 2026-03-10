@@ -22,3 +22,12 @@ class ValidationError(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(self.message)
+
+
+class ExternalProviderError(Exception):
+    """Raised when an external provider API call fails."""
+
+    def __init__(self, provider_name: str, message: str):
+        self.provider_name = provider_name
+        self.message = message
+        super().__init__(f"{provider_name}: {message}")
