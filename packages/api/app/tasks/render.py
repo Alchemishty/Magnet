@@ -13,22 +13,59 @@ from app.worker import celery_app
 logger = logging.getLogger(__name__)
 
 
+def _publish_progress(
+    job_id: str,
+    brief_id: str,
+    *,
+    status: str,
+    progress_pct: int | None = None,
+    phase: str | None = None,
+    message: str | None = None,
+) -> None:
+    """Publish a progress event to Redis. Best-effort — never raises."""
+    try:
+        from app.repositories.redis_client import get_redis_client
+        from app.schemas.progress import ProgressEvent
+
+        client = get_redis_client()
+        event = ProgressEvent(
+            job_id=UUID(job_id),
+            brief_id=UUID(brief_id),
+            status=status,
+            phase=phase,
+            progress_pct=progress_pct,
+            message=message,
+        )
+        client.publish(event.to_channel(), event.to_json())
+        client.close()
+    except Exception:
+        logger.debug("Failed to publish progress for job %s", job_id)
+
+
 @celery_app.task(name="app.tasks.render.process_render_job")
 def process_render_job(job_id: str) -> None:
     """Process a render job asynchronously via the Video Agent pipeline.
 
     Updates job status through the lifecycle: queued -> rendering -> done.
     On failure, sets status to 'failed' with the error message.
+    Publishes progress events to Redis at each lifecycle transition.
     """
     session = SessionLocal()
+    brief_id: str | None = None
     try:
         job_repo = RenderJobRepository(session)
         job = job_repo.get_by_id(UUID(job_id))
         if job is None:
             raise ValueError(f"RenderJob {job_id} not found")
 
+        brief_id = str(job.brief_id)
+
         job_repo.update(UUID(job_id), {"status": "rendering"})
         session.commit()
+        _publish_progress(
+            job_id, brief_id,
+            status="rendering", progress_pct=5, message="Render job started",
+        )
 
         brief_repo = BriefRepository(session)
         brief = brief_repo.get_by_id(job.brief_id)
@@ -43,6 +80,10 @@ def process_render_job(job_id: str) -> None:
             "composition": composition.model_dump() if composition else None,
         })
         session.commit()
+        _publish_progress(
+            job_id, brief_id,
+            status="done", progress_pct=100, message="Render complete",
+        )
     except Exception as exc:
         session.rollback()
         try:
@@ -54,6 +95,11 @@ def process_render_job(job_id: str) -> None:
             session.commit()
         except Exception:
             logger.exception("Failed to mark job %s as failed", job_id)
+        if brief_id is not None:
+            _publish_progress(
+                job_id, brief_id,
+                status="failed", message=str(exc),
+            )
         raise
     finally:
         session.close()
