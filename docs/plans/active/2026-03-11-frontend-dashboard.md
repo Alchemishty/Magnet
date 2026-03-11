@@ -25,7 +25,10 @@
 
 ## Decision Log
 
-- (populated during implementation)
+- Used getBaseUrl() function instead of top-level const for testability (Step 4)
+- Installed tailwindcss v3 (not v4) for PostCSS compatibility (Step 1)
+- Added @radix-ui/react-slot for Button asChild prop (Step 2)
+- Excluded vitest.config.ts from tsconfig.json to fix vite type conflict during build
 
 ---
 
