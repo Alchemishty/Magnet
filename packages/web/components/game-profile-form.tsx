@@ -61,7 +61,7 @@ export function GameProfileForm({ projectId }: GameProfileFormProps) {
         ? JSON.parse(brandGuidelinesText)
         : {};
     } catch {
-      // keep empty if invalid JSON
+      // invalid JSON — use empty object
     }
     const data: GameProfileCreate = {
       ...form,
