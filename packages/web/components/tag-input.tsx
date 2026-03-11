@@ -18,8 +18,8 @@ export function TagInput({ value, onChange, placeholder, id }: TagInputProps) {
     const tag = input.trim();
     if (tag && !value.includes(tag)) {
       onChange([...value, tag]);
-      setInput("");
     }
+    setInput("");
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
