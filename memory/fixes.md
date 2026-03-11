@@ -28,6 +28,20 @@ New files get formatted but existing files may not match. Running `ruff format .
 - **Context:** Any error handler that logs or stores exception messages
 - **Source:** 2026-03-10 Celery task integration, caught during deslop
 
+## vitest.config.ts causes Next.js build failure
+
+When vitest and @vitejs/plugin-react use different vite versions, Next.js type-checks `vitest.config.ts` and hits a type conflict in the `plugins` array. Fix: exclude `vitest.config.ts` from `tsconfig.json` → `exclude` array. This lets vitest use its own tsconfig resolution while keeping the Next.js build clean.
+
+- **Context:** Any Next.js + vitest project where vite version mismatches occur
+- **Source:** PR #13 (2026-03-11 frontend dashboard), build failed on Step 6
+
+## Use getBaseUrl() instead of top-level const for env var reads in API client
+
+A top-level `const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "..."` gets evaluated once at module import time, before tests can stub the env var. Use a `getBaseUrl()` function so the env var is read at each call, making the module testable with `vi.stubGlobal`.
+
+- **Context:** Any TypeScript module that reads env vars and needs to be unit tested
+- **Source:** PR #13 (2026-03-11 frontend dashboard), Step 4 TDD
+
 ## patch.dict scope vs module reload for env var tests
 
 `@patch.dict("os.environ", {...})` restores the env only *after* the test method returns. A `reload(module)` inside the test runs while the patch is active. To restore the module to default config after the test, use a `pytest.fixture(autouse=True)` with `yield` + `reload()` in the teardown — this runs after the patch.dict decorator has cleaned up.

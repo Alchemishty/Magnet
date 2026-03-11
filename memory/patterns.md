@@ -35,6 +35,20 @@ To get structured JSON from Claude, use a single tool definition with the desire
 - **Context:** Any service method that creates a DB record then dispatches an async task
 - **Source:** CodeRabbit review on PR #7 (2026-03-10 Celery task integration)
 
+## Use distinct React Query keys for list vs detail queries
+
+`useQuery({ queryKey: ["projects", userId] })` for a list and `useQuery({ queryKey: ["projects", id] })` for a detail will share the same cache entry if userId happens to equal id. Use `["projects", "list", userId]` and `["projects", "detail", id]` to namespace them. CodeRabbit catches this.
+
+- **Context:** Any React Query hooks where list and detail queries share a key prefix
+- **Source:** CodeRabbit review on PR #13 (2026-03-11 frontend dashboard)
+
+## Handle query errors explicitly in forms that auto-create on missing data
+
+If a form component uses a query to check for existing data (e.g., `useGameProfile`) and falls through to "create" mode when data is `undefined`, a transient query failure looks like "no data exists" and triggers a create. Always check `isError` separately and show an error state rather than falling through to create mode.
+
+- **Context:** Any form that distinguishes "create" vs "update" based on query results
+- **Source:** CodeRabbit review on PR #13 (2026-03-11 frontend dashboard)
+
 ## Inject Celery tasks via callables, not direct imports
 
 Services should accept task dispatch as an optional `Callable[[str], object]` parameter rather than importing Celery tasks directly. This keeps the service testable (mock the callable) and respects import direction (services don't depend on tasks). The route layer injects the actual `.delay` via a FastAPI `Depends` function.
