@@ -11,14 +11,14 @@ import type { ProjectCreate, ProjectUpdate } from "@/lib/types/project";
 
 export function useProjects(userId: string) {
   return useQuery({
-    queryKey: ["projects", userId],
+    queryKey: ["projects", "list", userId],
     queryFn: () => listProjects(userId),
   });
 }
 
 export function useProject(id: string) {
   return useQuery({
-    queryKey: ["projects", id],
+    queryKey: ["projects", "detail", id],
     queryFn: () => getProject(id),
     enabled: !!id,
   });

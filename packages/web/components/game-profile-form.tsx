@@ -19,9 +19,10 @@ interface GameProfileFormProps {
 }
 
 export function GameProfileForm({ projectId }: GameProfileFormProps) {
-  const { data: profile, isLoading } = useGameProfile(projectId);
+  const { data: profile, isLoading, isError } = useGameProfile(projectId);
   const createProfile = useCreateGameProfile(projectId);
   const updateProfile = useUpdateGameProfile(projectId);
+  const [jsonError, setJsonError] = useState("");
 
   const [form, setForm] = useState<GameProfileCreate>({
     genre: "",
@@ -50,18 +51,36 @@ export function GameProfileForm({ projectId }: GameProfileFormProps) {
           ? JSON.stringify(profile.brand_guidelines, null, 2)
           : ""
       );
+    } else if (!isLoading && !isError) {
+      setForm({
+        genre: "",
+        target_audience: "",
+        core_mechanics: [],
+        art_style: "",
+        brand_guidelines: {},
+        competitors: [],
+        key_selling_points: [],
+      });
+      setBrandGuidelinesText("");
     }
-  }, [profile]);
+  }, [profile, isLoading, isError]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setJsonError("");
     let brandGuidelines: Record<string, unknown> = {};
-    try {
-      brandGuidelines = brandGuidelinesText
-        ? JSON.parse(brandGuidelinesText)
-        : {};
-    } catch {
-      // invalid JSON — use empty object
+    if (brandGuidelinesText.trim()) {
+      try {
+        const parsed = JSON.parse(brandGuidelinesText);
+        if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+          setJsonError("Brand guidelines must be a JSON object.");
+          return;
+        }
+        brandGuidelines = parsed;
+      } catch {
+        setJsonError("Invalid JSON in brand guidelines.");
+        return;
+      }
     }
     const data: GameProfileCreate = {
       ...form,
@@ -78,6 +97,10 @@ export function GameProfileForm({ projectId }: GameProfileFormProps) {
 
   if (isLoading) {
     return <p className="text-muted-foreground">Loading game profile...</p>;
+  }
+
+  if (isError) {
+    return <p className="text-destructive">Failed to load game profile.</p>;
   }
 
   return (
@@ -134,6 +157,9 @@ export function GameProfileForm({ projectId }: GameProfileFormProps) {
               placeholder='{"primary_color": "#FF5733"}'
               rows={3}
             />
+            {jsonError && (
+              <p className="text-sm text-destructive">{jsonError}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="competitors">Competitors</Label>

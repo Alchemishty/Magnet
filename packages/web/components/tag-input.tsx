@@ -39,9 +39,9 @@ export function TagInput({ value, onChange, placeholder, id }: TagInputProps) {
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-1">
-        {value.map((tag) => (
+        {value.map((tag, index) => (
           <Badge
-            key={tag}
+            key={`${tag}-${index}`}
             variant="secondary"
             className="cursor-pointer"
             onClick={() => removeTag(tag)}

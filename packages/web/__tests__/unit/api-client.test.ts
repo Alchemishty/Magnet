@@ -28,6 +28,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("apiGet", () => {
@@ -46,11 +47,9 @@ describe("apiGet", () => {
     const fetchMock = mockFetchError(404, "Not Found");
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(apiGet("/api/projects/999")).rejects.toThrow(ApiError);
-    await expect(apiGet("/api/projects/999")).rejects.toMatchObject({
-      status: 404,
-      message: "Not Found",
-    });
+    const error = await apiGet("/api/projects/999").catch((e) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({ status: 404, message: "Not Found" });
   });
 });
 
@@ -75,11 +74,9 @@ describe("apiPost", () => {
     const fetchMock = mockFetchError(422, "Validation Error");
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(apiPost("/api/projects", {})).rejects.toThrow(ApiError);
-    await expect(apiPost("/api/projects", {})).rejects.toMatchObject({
-      status: 422,
-      message: "Validation Error",
-    });
+    const error = await apiPost("/api/projects", {}).catch((e) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({ status: 422, message: "Validation Error" });
   });
 });
 
@@ -104,11 +101,9 @@ describe("apiPatch", () => {
     const fetchMock = mockFetchError(500, "Internal Server Error");
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(apiPatch("/api/projects/1", {})).rejects.toThrow(ApiError);
-    await expect(apiPatch("/api/projects/1", {})).rejects.toMatchObject({
-      status: 500,
-      message: "Internal Server Error",
-    });
+    const error = await apiPatch("/api/projects/1", {}).catch((e) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({ status: 500, message: "Internal Server Error" });
   });
 });
 
@@ -128,10 +123,8 @@ describe("apiDelete", () => {
     const fetchMock = mockFetchError(403, "Forbidden");
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(apiDelete("/api/projects/1")).rejects.toThrow(ApiError);
-    await expect(apiDelete("/api/projects/1")).rejects.toMatchObject({
-      status: 403,
-      message: "Forbidden",
-    });
+    const error = await apiDelete("/api/projects/1").catch((e) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({ status: 403, message: "Forbidden" });
   });
 });

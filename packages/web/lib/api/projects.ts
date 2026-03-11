@@ -14,9 +14,12 @@ export async function listProjects(
   offset = 0,
   limit = 100,
 ): Promise<Project[]> {
-  return apiGet<Project[]>(
-    `/api/projects?user_id=${userId}&offset=${offset}&limit=${limit}`,
-  );
+  const params = new URLSearchParams({
+    user_id: userId,
+    offset: String(offset),
+    limit: String(limit),
+  });
+  return apiGet<Project[]>(`/api/projects?${params}`);
 }
 
 export async function getProject(id: string): Promise<Project> {

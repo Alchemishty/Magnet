@@ -4,7 +4,7 @@ import { GameProfileForm } from "@/components/game-profile-form";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 vi.mock("@/lib/api/game-profiles", () => ({
-  getGameProfile: vi.fn().mockRejectedValue(new Error("not found")),
+  getGameProfile: vi.fn().mockResolvedValue(null),
   createGameProfile: vi.fn(),
   updateGameProfile: vi.fn(),
 }));
