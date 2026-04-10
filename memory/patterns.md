@@ -49,6 +49,20 @@ If a form component uses a query to check for existing data (e.g., `useGameProfi
 - **Context:** Any form that distinguishes "create" vs "update" based on query results
 - **Source:** CodeRabbit review on PR #13 (2026-03-11 frontend dashboard)
 
+## Guard all input handlers when a component has a disabled prop
+
+When a component accepts `disabled?: boolean`, guard every handler that can trigger side effects — not just the primary interaction handlers. A hidden `<input type="file">` onChange fires regardless of the parent's disabled state. Every code path that calls the callback (onClick, onKeyDown, onChange, onDrop) must check `if (disabled) return`. Tests should follow AAA: render disabled, fire the event, assert the callback was NOT called.
+
+- **Context:** Any component with a disabled prop that wraps native inputs
+- **Source:** CodeRabbit + human review on PR #14 (2026-04-10 asset upload)
+
+## Add AbortController timeout to long-running fetch calls
+
+Raw `fetch` calls (like S3 PUT uploads) have no built-in timeout. A stalled connection leaves the mutation pending indefinitely. Wrap with `AbortController` and `setTimeout`, clean up in `finally`.
+
+- **Context:** Any fetch call that uploads files or makes long-running requests outside the API client
+- **Source:** CodeRabbit review on PR #14 (2026-04-10 asset upload)
+
 ## Inject Celery tasks via callables, not direct imports
 
 Services should accept task dispatch as an optional `Callable[[str], object]` parameter rather than importing Celery tasks directly. This keeps the service testable (mock the callable) and respects import direction (services don't depend on tasks). The route layer injects the actual `.delay` via a FastAPI `Depends` function.
