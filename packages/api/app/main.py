@@ -1,7 +1,9 @@
 import logging
+import os
 
 from fastapi import FastAPI
 from fastapi.concurrency import run_in_threadpool
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.db import engine
@@ -16,6 +18,16 @@ from app.routes import (
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Magnet API", version="0.1.0")
+
+_raw_origins = os.environ.get("CORS_ORIGINS", "http://localhost:3000")
+cors_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(projects_router)
 app.include_router(briefs_router)
