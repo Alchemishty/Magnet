@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { GameProfileForm } from "@/components/game-profile-form";
 import { AssetUpload } from "@/components/asset-upload";
 import { ConceptReview } from "@/components/concept-review";
+import { Production } from "@/components/production";
 import { useProject } from "@/lib/hooks/use-projects";
 
 export default function ProjectDetailPage() {
@@ -31,6 +32,8 @@ export default function ProjectDetailPage() {
       <AssetUpload projectId={project.id} />
       <Separator />
       <ConceptReview projectId={project.id} />
+      <Separator />
+      <Production projectId={project.id} />
     </div>
   );
 }
