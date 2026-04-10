@@ -2,7 +2,9 @@
 
 import { useParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { GameProfileForm } from "@/components/game-profile-form";
+import { AssetUpload } from "@/components/asset-upload";
 import { useProject } from "@/lib/hooks/use-projects";
 
 export default function ProjectDetailPage() {
@@ -24,6 +26,8 @@ export default function ProjectDetailPage() {
         <Badge variant="secondary">{project.status}</Badge>
       </div>
       <GameProfileForm projectId={project.id} />
+      <Separator />
+      <AssetUpload projectId={project.id} />
     </div>
   );
 }
