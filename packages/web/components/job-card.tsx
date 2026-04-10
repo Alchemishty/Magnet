@@ -66,8 +66,10 @@ export function JobCard({ job, progress }: JobCardProps) {
           </div>
         )}
 
-        {job.status === "failed" && job.error_message && (
-          <p className="text-sm text-destructive truncate">{job.error_message}</p>
+        {job.status === "failed" && (
+          <p className="text-sm text-destructive truncate">
+            {job.error_message ?? "Rendering failed. Please retry."}
+          </p>
         )}
       </div>
 
