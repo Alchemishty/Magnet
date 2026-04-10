@@ -26,8 +26,9 @@ describe("DropZone", () => {
   it("does not call onFiles when disabled", () => {
     const onFiles = vi.fn();
     render(<DropZone onFiles={onFiles} disabled />);
-    // Clicking the drop zone should not open file dialog when disabled
-    // The disabled state is visual — the input is still there but handleClick guards it
-    expect(screen.getByText(/drag files here/i)).toBeInTheDocument();
+    const input = screen.getByTestId("file-input");
+    const file = new File(["content"], "test.png", { type: "image/png" });
+    fireEvent.change(input, { target: { files: [file] } });
+    expect(onFiles).not.toHaveBeenCalled();
   });
 });

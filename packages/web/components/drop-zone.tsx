@@ -51,6 +51,7 @@ export function DropZone({ onFiles, accept, disabled }: DropZoneProps) {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return;
     const files = Array.from(e.target.files || []);
     if (files.length > 0) onFiles(files);
     e.target.value = "";
