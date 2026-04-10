@@ -25,10 +25,14 @@ export function DropZone({ onFiles, accept, disabled }: DropZoneProps) {
     [onFiles, disabled],
   );
 
-  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  }, []);
+  const handleDragOver = useCallback(
+    (e: DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      if (disabled) return;
+      setIsDragOver(true);
+    },
+    [disabled],
+  );
 
   const handleDragLeave = useCallback(() => {
     setIsDragOver(false);
@@ -64,7 +68,7 @@ export function DropZone({ onFiles, accept, disabled }: DropZoneProps) {
       onDragLeave={handleDragLeave}
       className={cn(
         "flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 transition-colors cursor-pointer",
-        isDragOver
+        !disabled && isDragOver
           ? "border-primary bg-primary/5"
           : "border-muted-foreground/25",
         disabled && "opacity-50 cursor-not-allowed",
