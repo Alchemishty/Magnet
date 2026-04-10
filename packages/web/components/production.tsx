@@ -92,7 +92,7 @@ function BriefProduction({ brief }: { brief: Brief }) {
         </div>
       )}
 
-      {doneJob && <VideoPreview url={null} />}
+      {doneJob && <VideoPreview url={doneJob.output_s3_key} />}
     </div>
   );
 }

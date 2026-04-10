@@ -24,6 +24,8 @@ function formatTime(iso: string): string {
 
 export function JobCard({ job, progress }: JobCardProps) {
   const variant = statusBadgeVariant[job.status];
+  const progressPct = Math.max(0, Math.min(100, progress?.progress_pct ?? 0));
+  const progressPhase = progress?.phase ?? "Rendering";
 
   return (
     <div className="flex items-center gap-4 rounded-lg border p-3">
@@ -41,17 +43,13 @@ export function JobCard({ job, progress }: JobCardProps) {
 
         {job.status === "rendering" && (
           <div className="space-y-1">
-            {progress ? (
-              <p className="text-sm">
-                {progress.phase} &middot; {progress.progress_pct}%
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">Rendering...</p>
-            )}
+            <p className="text-sm">
+              {progressPhase} &middot; {progressPct}%
+            </p>
             <div className="h-2 rounded-full bg-muted">
               <div
                 className="h-2 rounded-full bg-primary transition-all"
-                style={{ width: `${progress?.progress_pct ?? 0}%` }}
+                style={{ width: `${progressPct}%` }}
               />
             </div>
           </div>
