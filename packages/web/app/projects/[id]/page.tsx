@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { GameProfileForm } from "@/components/game-profile-form";
 import { AssetUpload } from "@/components/asset-upload";
+import { ConceptReview } from "@/components/concept-review";
 import { useProject } from "@/lib/hooks/use-projects";
 
 export default function ProjectDetailPage() {
@@ -28,6 +29,8 @@ export default function ProjectDetailPage() {
       <GameProfileForm projectId={project.id} />
       <Separator />
       <AssetUpload projectId={project.id} />
+      <Separator />
+      <ConceptReview projectId={project.id} />
     </div>
   );
 }
