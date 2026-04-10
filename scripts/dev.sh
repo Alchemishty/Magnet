@@ -18,7 +18,7 @@ cleanup() {
   exit 0
 }
 
-trap cleanup SIGINT SIGTERM
+trap cleanup EXIT
 
 echo "==============================="
 echo "  Magnet Local Dev"
@@ -35,6 +35,10 @@ done
 echo "  Postgres ready."
 
 # 2. Load env
+if [ ! -f .env ]; then
+  echo "ERROR: .env file not found. Copy .env.example to .env and fill in your API keys."
+  exit 1
+fi
 set -a
 source .env
 set +a

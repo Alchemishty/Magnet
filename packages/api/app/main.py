@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Magnet API", version="0.1.0")
 
-cors_origins = os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
+_raw_origins = os.environ.get("CORS_ORIGINS", "http://localhost:3000")
+cors_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
