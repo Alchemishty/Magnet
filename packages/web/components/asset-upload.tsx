@@ -32,7 +32,7 @@ export function AssetUpload({ projectId }: AssetUploadProps) {
 
   const handleFiles = (files: File[]) => {
     files.forEach((file) => {
-      const id = `${Date.now()}-${file.name}`;
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2)}-${file.name}`;
       const assetType = detectAssetType(file);
 
       setUploads((prev) => [

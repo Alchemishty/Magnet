@@ -144,11 +144,14 @@ describe("uploadFileToS3", () => {
     });
     await uploadFileToS3("https://s3.amazonaws.com/upload", file);
 
-    expect(mockFetch).toHaveBeenCalledWith("https://s3.amazonaws.com/upload", {
-      method: "PUT",
-      body: file,
-      headers: { "Content-Type": "video/mp4" },
-    });
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://s3.amazonaws.com/upload",
+      expect.objectContaining({
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": "video/mp4" },
+      }),
+    );
   });
 
   it("throws on non-ok response", async () => {

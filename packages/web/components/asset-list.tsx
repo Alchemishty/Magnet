@@ -15,7 +15,7 @@ const ASSET_ICONS: Record<AssetType, React.ElementType> = {
 };
 
 function formatBytes(bytes: number | null): string {
-  if (!bytes) return "\u2014";
+  if (bytes == null) return "\u2014";
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -61,6 +61,7 @@ export function AssetList({ projectId }: AssetListProps) {
             <Button
               variant="ghost"
               size="icon"
+              aria-label={`Delete asset ${asset.filename}`}
               onClick={() => deleteAsset.mutate(asset.id)}
               disabled={deleteAsset.isPending}
             >

@@ -21,13 +21,20 @@ export async function uploadFileToS3(
   uploadUrl: string,
   file: File,
 ): Promise<void> {
-  const res = await fetch(uploadUrl, {
-    method: "PUT",
-    body: file,
-    headers: { "Content-Type": file.type },
-  });
-  if (!res.ok) {
-    throw new Error(`S3 upload failed: ${res.status}`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+  try {
+    const res = await fetch(uploadUrl, {
+      method: "PUT",
+      body: file,
+      headers: { "Content-Type": file.type },
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`S3 upload failed: ${res.status}`);
+    }
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
