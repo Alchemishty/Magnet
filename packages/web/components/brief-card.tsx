@@ -15,6 +15,10 @@ interface Scene {
   [key: string]: unknown;
 }
 
+function isScene(value: unknown): value is Scene {
+  return typeof value === "object" && value !== null && typeof (value as Scene).strategy === "string";
+}
+
 function getStrategyBreakdown(scenes: Scene[]): string {
   const counts: Record<string, number> = {};
   for (const scene of scenes) {
@@ -27,8 +31,10 @@ function getStrategyBreakdown(scenes: Scene[]): string {
 
 function getScenePlanSummary(scenePlan: Record<string, unknown> | null): string | null {
   if (!scenePlan) return null;
-  const scenes = scenePlan.scenes as Scene[] | undefined;
-  if (!Array.isArray(scenes) || scenes.length === 0) return null;
+  const raw = scenePlan.scenes;
+  if (!Array.isArray(raw)) return null;
+  const scenes = raw.filter(isScene);
+  if (scenes.length === 0) return null;
   const breakdown = getStrategyBreakdown(scenes);
   return `${scenes.length} scenes: ${breakdown}`;
 }

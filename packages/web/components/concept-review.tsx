@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Sparkles } from "lucide-react";
 import { BriefCard } from "@/components/brief-card";
 import { useBriefs, useGenerateConcepts, useUpdateBrief, useDeleteBrief } from "@/lib/hooks/use-briefs";
@@ -40,17 +39,18 @@ export function ConceptReview({ projectId }: ConceptReviewProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Status filter buttons */}
-        <div className="flex gap-2">
+        <div className="flex gap-2" role="tablist" aria-label="Concept status filters">
           {STATUS_FILTERS.map((filter) => (
-            <Badge
+            <Button
               key={filter.label}
               variant={statusFilter === filter.value ? "default" : "secondary"}
-              className="cursor-pointer"
+              size="sm"
+              role="tab"
+              aria-selected={statusFilter === filter.value}
               onClick={() => setStatusFilter(filter.value)}
             >
               {filter.label}
-            </Badge>
+            </Button>
           ))}
         </div>
 
